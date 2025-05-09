@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Watch Video</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        // Tailwind CSS configuration (Copied from index.html)
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00ff9d',
+                        secondary: '#0066ff',
+                        purpleish: '#9370DB',
+                        dark: '#0a0a0a',
+                        darker: '#020202',
+                        'light-text': '#e0e0e0',
+                        'medium-text': '#a0a0a0',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    animation: {
+                        'subtle-float': 'subtle-float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        'subtle-float': {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-8px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Import Google Fonts (Copied from index.html) */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif; 
+            background-color: #020202; 
+            color: #e0e0e0; 
+            margin: 0;
+            padding: 0; 
+            overflow-x: hidden; 
+            scroll-behavior: smooth; 
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, #00ff9d, #0066ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .glow-text-primary {
+            text-shadow: 0 0 12px rgba(0, 255, 157, 0.6);
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(90deg, #00ff9d, #0066ff);
+            color: #050505;
+            transition: all 0.3s ease;
+            padding: 0.625rem 1.25rem; 
+            border-radius: 0.3125rem; 
+            font-weight: bold;
+            text-align: center;
+            display: inline-block; 
+            text-decoration: none; 
+        }
+        .btn-primary-custom:hover {
+            opacity: 0.9;
+            box-shadow: 0 5px 15px rgba(0, 255, 157, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-share-base { 
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            height: 40px;
+            color: white;
+            text-decoration: none;
+            border-radius: 50%;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .whatsapp-btn {
+            background-color: #25D366;
+        }
+        .whatsapp-btn:hover {
+            background-color: #1DA851;
+        }
+        .facebook-btn {
+            background-color: #1877F2;
+        }
+        .facebook-btn:hover {
+            background-color: #1158B4;
+        }
+        .instagram-btn {
+            background: linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D, #F56040, #F77737, #FCAF45, #FFDC80);
+        }
+        .instagram-btn:hover {
+            opacity: 0.9;
+        }
+        .twitter-btn {
+            background-color: #000000;
+            border: 1px solid #ffffff;
+        }
+        .twitter-btn i {
+            color: #ffffff;
+        }
+        .twitter-btn:hover {
+            background-color: #333333;
+        }
+        .linkedin-btn {
+            background-color: #0A66C2;
+        }
+        .linkedin-btn:hover {
+            background-color: #004182;
+        }
+        .download-btn {
+            background-color: #6c757d;
+        }
+        .download-btn:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body class="bg-darker text-light-text font-sans">
+    <div class="min-h-screen flex flex-col items-center p-4">
+
+        <video class="w-full max-w-2xl mt-2.5 rounded-lg shadow-lg" src="https://cgcpaactxmygmdxmqyhz.supabase.co/storage/v1/object/public/videos/public/video-1743906573724.mp4" controls autoplay playsinline loop muted>
+            Your browser does not support the video tag.
+        </video>
+
+        <div class="share mt-5 flex flex-wrap justify-center gap-3">
+            <a class="btn-share-base whatsapp-btn" href="/api/log-share?platform=whatsapp&video=video-1743906573724_1746576686866" 
+               onclick="fetch(this.href); window.open('whatsapp://send?text=Check%20this%20out:%20https://cgcpaactxmygmdxmqyhz.supabase.co/storage/v1/object/public/videos/public/video-1743906573724.mp4?utm_source=whatsapp&utm_medium=share_button', '_blank'); return false;"
+               title="Share on WhatsApp">
+               <i class="fab fa-whatsapp"></i>
+            </a>
+            <a class="btn-share-base facebook-btn" href="/api/log-share?platform=facebook&video=video-1743906573724_1746576686866" 
+               onclick="fetch(this.href); window.open('https://www.facebook.com/sharer/sharer.php?u=https://cgcpaactxmygmdxmqyhz.supabase.co/storage/v1/object/public/videos/public/video-1743906573724.mp4?utm_source=facebook&utm_medium=share_button', '_blank', 'width=600,height=400'); return false;"
+               title="Share on Facebook">
+               <i class="fab fa-facebook-f"></i>
+            </a>
+            <a class="btn-share-base instagram-btn" href="/api/log-share?platform=instagram&video=video-1743906573724_1746576686866" 
+               onclick="fetch(this.href); window.open('https://www.instagram.com/', '_blank'); alert('Copy this link to share in your Instagram story or post: https://cgcpaactxmygmdxmqyhz.supabase.co/storage/v1/object/public/videos/public/video-1743906573724.mp4?utm_source=instagram&utm_medium=share_button'); return false;"
+               title="Share on Instagram">
+               <i class="fab fa-instagram"></i>
+            </a>
+            <a class="btn-share-base twitter-btn" href="/api/log-share?platform=twitter&video=video-1743906573724_1746576686866" 
+               onclick="fetch(this.href); window.open('https://twitter.com/intent/tweet?url=https://cgcpaactxmygmdxmqyhz.supabase.co/storage/v1/object/public/videos/public/video-1743906573724.mp4?utm_source=twitter&utm_medium=share_button&text=Check%20this%20out!', '_blank', 'width=600,height=300'); return false;"
+               title="Share on Twitter">
+               <i class="fab fa-twitter"></i>
+            </a>
+            <a class="btn-share-base linkedin-btn" href="/api/log-share?platform=linkedin&video=video-1743906573724_1746576686866" 
+               onclick="fetch(this.href); window.open('https://www.linkedin.com/sharing/share-offsite/?url=https://cgcpaactxmygmdxmqyhz.supabase.co/storage/v1/object/public/videos/public/video-1743906573724.mp4?utm_source=linkedin&utm_medium=share_button', '_blank', 'width=600,height=600'); return false;"
+               title="Share on LinkedIn">
+               <i class="fab fa-linkedin-in"></i>
+            </a>
+            <a class="btn-share-base download-btn" href="/api/log-share?platform=download&video=video-1743906573724_1746576686866" 
+               onclick="fetch(this.href); window.location.href='https://cgcpaactxmygmdxmqyhz.supabase.co/storage/v1/object/public/videos/public/video-1743906573724.mp4?download=true'; return false;"
+               title="Download Video">
+               <i class="fas fa-download"></i>
+            </a>
+        </div>
+
+        <div class="mt-8 w-full max-w-2xl text-center">
+            <h1 class="text-3xl md:text-4xl font-bold gradient-text glow-text-primary mb-8">
+                Revolucione suas produções
+            </h1>
+
+            <div class="space-y-6">
+                <div class="bg-dark p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold text-primary mb-3">Estúdio e Tecnologia</h2>
+                    <p class="text-medium-text mb-4">LED/Disguise/Projeção/Unreal</p>
+                    <a href="https://onav.com.br" target="_blank" rel="noopener noreferrer"
+                       class="btn-primary-custom">
+                       On + Av
+                    </a>
+                </div>
+
+                <div class="bg-dark p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold text-primary mb-3">Media Servers</h2>
+                    <a href="https://disguise.one" target="_blank" rel="noopener noreferrer"
+                       class="btn-primary-custom">
+                       Disguise
+                    </a>
+                </div>
+
+                <div class="bg-dark p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold text-primary mb-3">Cinebot Draco</h2>
+                    <a href="https://rubelabs.com.br" target="_blank" rel="noopener noreferrer"
+                       class="btn-primary-custom">
+                       Rube Labs
+                    </a>
+                </div>
+
+                <div class="bg-dark p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold text-primary mb-3">Film Production Degree USA</h2>
+                    <a href="https://fullsail.edu" target="_blank" rel="noopener noreferrer"
+                       class="btn-primary-custom">
+                       Full Sail University
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            fetch(`/api/log-scan?video=video-1743906573724_1746576686866`);
+        </script>
+
+        <script>
+            // Unmute video after user interaction to comply with autoplay policies
+            document.addEventListener('DOMContentLoaded', function() {
+                const video = document.querySelector('video');
+                
+                // Function to unmute the video
+                function unmuteVideo() {
+                    video.muted = false;
+                    // Remove the event listeners once unmuted
+                    document.removeEventListener('click', unmuteVideo);
+                    document.removeEventListener('touchstart', unmuteVideo);
+                }
+                
+                // Add event listeners for user interaction
+                document.addEventListener('click', unmuteVideo);
+                document.addEventListener('touchstart', unmuteVideo);
+                
+                // Ensure video plays on mobile
+                video.play().catch(function(error) {
+                    console.log('Autoplay prevented: ' + error);
+                    // We'll unmute on user interaction instead
+                });
+            });
+        </script>
+    </div>
+</body>
+</html>

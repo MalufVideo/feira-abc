@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Assista ao Vídeo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00ff9d',
+                        secondary: '#0066ff',
+                        purpleish: '#9370DB',
+                        dark: '#0a0a0a',
+                        lightText: '#e0e0e0',
+                        darkText: '#333333',
+                    },
+                    animation: {
+                        'gradient-text': 'gradient-text 5s ease infinite',
+                    },
+                    keyframes: {
+                        'gradient-text': {
+                            '0%, 100%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'left center',
+                            },
+                            '50%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'right center',
+                            },
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 50%, #1a1a1a 100%);
+            color: var(--lightText);
+            -webkit-tap-highlight-color: transparent; /* Removes blue tap highlight on mobile */
+        }
+        .gradient-text-animated {
+            background: linear-gradient(to right, #00ff9d, #0066ff, #9370DB);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient-text 5s ease infinite;
+        }
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            max-width: 100%;
+            background: #000;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        .video-container video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+        }
+        .custom-button {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .custom-button:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+         /* Ensure Font Awesome icons are vertically centered in buttons */
+        .fab, .fas {
+            display: inline-block;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body class="bg-dark text-lightText min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="w-full max-w-xl bg-gray-800/50 backdrop-blur-md p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-700">
+        
+        <!-- Video Player -->
+        <div class="video-container mb-6">
+            <video controls autoplay playsinline loop preload="auto" poster="placeholder-poster.jpg">
+                <source src="https://cgcpaactxmygmdxmqyhz.supabase.co/storage/v1/object/public/videos/public/video-1743906545408.mp4" type="video/mp4">
+                Seu navegador não suporta a tag de vídeo.
+            </video>
+        </div>
+
+        <!-- Title -->
+        <h1 class="text-3xl sm:text-4xl font-bold text-center mb-2 gradient-text-animated">
+            Seu Momento Especial!
+        </h1>
+        <p class="text-center text-gray-400 mb-6 text-sm sm:text-base">
+            Compartilhe este vídeo com seus amigos e familiares.
+        </p>
+
+        <!-- Share Buttons -->
+        <div class="flex justify-center items-center space-x-3 sm:space-x-4 mt-6">
+            <!-- WhatsApp -->
+            <a href="https://wa.me/?text=Confira%20este%20v%C3%ADdeo%21%20[MOBILE_PAGE_URL]"
+               target="_blank"
+               onclick="logShare('WhatsApp', 'video-1743906545408_1746575521669')"
+               class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-3 sm:py-3 sm:px-4 rounded-full flex items-center justify-center transition-transform duration-150 ease-in-out hover:scale-110"
+               aria-label="Compartilhar no WhatsApp">
+                <i class="fab fa-whatsapp text-xl sm:text-2xl"></i>
+            </a>
+
+            <!-- Instagram -->
+            <a href="https://cgcpaactxmygmdxmqyhz.supabase.co/storage/v1/object/public/videos/public/video-1743906545408.mp4"
+               target="_blank"
+               onclick="logShare('Instagram', 'video-1743906545408_1746575521669')"
+               class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-3 sm:py-3 sm:px-4 rounded-full flex items-center justify-center transition-transform duration-150 ease-in-out hover:scale-110"
+               aria-label="Compartilhar no Instagram">
+                <i class="fab fa-instagram text-xl sm:text-2xl"></i>
+            </a>
+
+            <!-- Facebook -->
+            <a href="https://www.facebook.com/sharer/sharer.php?u=[MOBILE_PAGE_URL]"
+               target="_blank"
+               onclick="logShare('Facebook', 'video-1743906545408_1746575521669')"
+               class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 sm:py-3 sm:px-4 rounded-full flex items-center justify-center transition-transform duration-150 ease-in-out hover:scale-110"
+               aria-label="Compartilhar no Facebook">
+                <i class="fab fa-facebook-f text-xl sm:text-2xl"></i>
+            </a>
+
+            <!-- X (Twitter) -->
+            <a href="https://twitter.com/intent/tweet?url=[MOBILE_PAGE_URL]&text=Dê%20uma%20olhada%20neste%20v%C3%ADdeo%21"
+               target="_blank"
+               onclick="logShare('X', 'video-1743906545408_1746575521669')"
+               class="bg-black hover:bg-gray-800 text-white font-bold py-2 px-3 sm:py-3 sm:px-4 rounded-full flex items-center justify-center transition-transform duration-150 ease-in-out hover:scale-110"
+               aria-label="Compartilhar no X">
+                <i class="fab fa-twitter text-xl sm:text-2xl"></i>
+            </a>
+            
+            <!-- LinkedIn -->
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=[MOBILE_PAGE_URL]"
+               target="_blank"
+               onclick="logShare('LinkedIn', 'video-1743906545408_1746575521669')"
+               class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-3 sm:py-3 sm:px-4 rounded-full flex items-center justify-center transition-transform duration-150 ease-in-out hover:scale-110"
+               aria-label="Compartilhar no LinkedIn">
+                <i class="fab fa-linkedin-in text-xl sm:text-2xl"></i>
+            </a>
+        </div>
+
+        <!-- Additional Content Sections -->
+        <div class="mt-10 pt-6 border-t border-gray-700">
+            <h2 class="text-xl sm:text-2xl font-semibold text-center mb-4 text-primary">Descubra Nossa Tecnologia</h2>
+            <p class="text-center text-gray-400 text-xs sm:text-sm mb-6">
+                Nossos estúdios utilizam câmeras de última geração e sistemas de áudio profissionais para garantir que cada momento seja capturado com clareza e impacto impressionantes.
+            </p>
+            <div class="flex justify-center">
+                <a href="#" class="custom-button bg-secondary hover:bg-purpleish text-white font-semibold py-2 px-6 rounded-lg text-sm sm:text-base">
+                    Saiba Mais
+                </a>
+            </div>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-gray-700">
+            <h2 class="text-xl sm:text-2xl font-semibold text-center mb-4 text-primary">Media Servers de Alta Performance</h2>
+            <p class="text-center text-gray-400 text-xs sm:text-sm">
+                Potencialize sua experiência com nossos media servers, desenhados para streaming e gerenciamento de conteúdo em tempo real, sem interrupções.
+            </p>
+        </div>
+
+        <footer class="mt-10 pt-6 text-center text-gray-500 text-xs sm:text-sm">
+            <p>&copy; <script>document.write(new Date().getFullYear())</script> Seu Nome de Empresa Aqui. Todos os direitos reservados.</p>
+            <p class="mt-1">Slug: video-1743906545408_1746575521669</p>
+        </footer>
+    </div>
+
+    <script>
+        function logShare(platform, videoSlug) {
+            // The video-1743906545408_1746575521669 placeholder in the onclick attribute is replaced by watcher.js
+            fetch(`/api/log-share?platform=${platform}&video=${videoSlug}`)
+                .then(response => {
+                    if (!response.ok) {
+                        console.error(`Error logging share to ${platform}: HTTP status ${response.status}`);
+                        return response.text().then(text => { throw new Error(text || `HTTP error! Status: ${response.status}`) });
+                    }
+                    console.log(`Logged share to ${platform} for ${videoSlug}`);
+                })
+                .catch(error => console.error(`Error logging share to ${platform}:`, error));
+            
+            // Allow the default link behavior (opening the share URL)
+            return true;
+        }
+
+        // Optional: Preload video metadata for faster playback start
+        const videoElement = document.querySelector('video');
+        if (videoElement) {
+            videoElement.load(); // This starts loading metadata
+        }
+    </script>
+</body>
+</html>

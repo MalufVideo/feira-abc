@@ -1,0 +1,18 @@
+## 📌 TODO Checklist
+- [x] Configure OBS recording manually
+- [x] Install Node.js + `chokidar`, `@supabase/supabase-js`, `qrcode`, `fs-extra`, `express`
+- [x] Set up Supabase Client (`supabaseClient.js` with credentials)
+- [x] Basic `watcher.js` script (detection, initial Supabase upload, QR gen, HTML gen)
+- [x] Basic `server.js` (static serving, placeholder log endpoints)
+- [ ] Test: File detection, Supabase upload, QR generation, HTML page generation
+- [ ] Test: Local serving of booth & mobile pages
+- [ ] Test: QR scanning on real devices & logging
+- [ ] Implement actual logging in `server.js` (e.g., to Supabase DB or file)
+- [ ] Generate Supabase public video URL after upload (verify and use consistently)
+- [ ] Create two HTML files per video (booth + mobile) - (initial version done, refine if needed)
+- [ ] Display booth page in fullscreen browser (manual step, document how)
+- [ ] Add UTM tracking & refined sharing logic for mobile page
+- [ ] Refine error handling in `watcher.js` and `server.js`
+- [ ] Review security and best practices (e.g., Supabase RLS if using DB logging)
+- [ ] Production: Update `MOBILE_BASE_URL` in `watcher.js` to public domain
+- [ ] Documentation: Update README with final setup and usage instructions
