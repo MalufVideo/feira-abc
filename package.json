@@ -1,0 +1,12 @@
+{
+  "name": "feira-qr-video-vercel",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.4"
+  },
+  "engines": {
+    "node": "18.x" 
+  }
+}
