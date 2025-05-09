@@ -1,15 +1,15 @@
 {
   "version": 2,
   "builds": [
-    { "src": "public/**", "use": "@vercel/static" },
-    {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
-    }
+    { "src": "public", "use": "@vercel/static" },
+    { "src": "api/**/*.js", "use": "@vercel/node" }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/admin", "dest": "/public/admin/index.html" },
-    { "src": "/(.*)", "dest": "/public/$1" }
+    { "src": "/admin", "dest": "/admin/index.html" },
+    { "src": "/admin/(.*)", "dest": "/admin/$1" },
+    { "src": "/mobile/(.*)", "dest": "/mobile/$1" },
+    { "src": "/qrcodes/(.*)", "dest": "/qrcodes/$1" },
+    { "src": "/(.*)", "dest": "/$1" }
   ]
 }
