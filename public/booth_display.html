@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Booth Display</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 95vh; background-color: #f0f0f0; margin: 0; text-align: center; }
         #video-container { margin-bottom: 20px; border: 5px solid #333; border-radius: 10px; background-color: #000; }
@@ -19,48 +20,72 @@
         <video id="boothVideo" controls autoplay muted playsinline></video>
     </div>
     <div id="qr-container">
-        <img id="qrImage" src="" alt="QR Code">
+        <img id="qrCodeImage" src="" alt="QR Code">
     </div>
     <p>Aponte a câmera do seu celular para o QR Code acima.</p>
 
     <script>
+        // IMPORTANT: Replace with your actual Supabase URL and Anon Key
+        // These should ideally be configured via environment variables and passed securely.
+        // For Vercel, you'd set these in the project settings and they become available.
+        // For now, we'll hardcode for testing, but remember to secure them for production.
+        const SUPABASE_URL = 'https://cgcpaactxmygmdxmqyhz.supabase.co'; // From your .env
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNnY3BhYWN0eG15Z21keG1xeWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTM5ODgwNzMsImV4cCI6MjAyOTU2NDA3M30.zBI8h4C908n292a20lQ_yJavekO1FS20H_tcLzY05sY'; // The PUBLIC ANON KEY from your .env or Supabase project settings
+
         const videoElement = document.getElementById('boothVideo');
-        const qrImageElement = document.getElementById('qrImage');
-        let lastVideoTimestamp = 0;
+        const qrImageElement = document.getElementById('qrCodeImage');
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         async function fetchLatestVideoInfo() {
+            console.log('Fetching latest video info from Supabase...');
             try {
-                // Add cache buster to ensure fresh data
-                const response = await fetch('/latest_booth_info.json?t=' + new Date().getTime());
-                if (!response.ok) {
-                    console.error('Failed to fetch latest video info, status:', response.status);
-                    if (response.status === 404 && lastVideoTimestamp === 0) {
-                        // Initial load and no info yet, show placeholder or message
-                        videoElement.src = ''; // Or a placeholder video
-                        qrImageElement.src = ''; // Or a placeholder QR
-                        qrImageElement.alt = 'Aguardando o próximo vídeo...';
-                    }
+                const { data, error } = await supabase
+                    .from('booth_live_status')
+                    .select('video_url, qr_code_url, video_slug')
+                    .eq('id', 'current_status') // Fetch the specific row
+                    .single(); // We expect only one row
+
+                if (error) {
+                    console.error('Error fetching video info:', error);
+                    qrImageElement.alt = 'Erro ao carregar QR code.';
+                    videoElement.poster = ''; // Or some error image
                     return;
                 }
-                const data = await response.json();
 
-                if (data.timestamp && data.timestamp > lastVideoTimestamp) {
-                    console.log('New video info found:', data);
-                    lastVideoTimestamp = data.timestamp;
-                    videoElement.src = data.videoUrl;
-                    qrImageElement.src = data.qrCodeUrl;
-                    qrImageElement.alt = 'QR Code para o vídeo ' + data.videoSlug;
-                    videoElement.load(); // Important to load the new source
-                    videoElement.play().catch(e => console.warn('Autoplay prevented:', e));
+                if (data) {
+                    console.log('Data received:', data);
+                    if (data.video_url) {
+                        videoElement.src = data.video_url;
+                        videoElement.load(); // Load the new video source
+                        videoElement.play().catch(e => console.warn("Autoplay was prevented for booth video:", e));
+                    } else {
+                        console.warn('No video_url found in Supabase data.');
+                    }
+                    
+                    if (data.qr_code_url) {
+                        qrImageElement.src = data.qr_code_url;
+                        qrImageElement.alt = `QR Code para Video ${data.video_slug || ''}`;
+                    } else {
+                        console.warn('No qr_code_url found in Supabase data.');
+                        qrImageElement.alt = 'QR code indisponível.';
+                    }
+                } else {
+                    console.warn('No data found in booth_live_status for id current_status.');
+                    qrImageElement.alt = 'Informação do vídeo não encontrada.';
                 }
-            } catch (error) {
-                console.error('Error fetching or processing latest video info:', error);
+            } catch (err) {
+                console.error('Unexpected error in fetchLatestVideoInfo:', err);
+                qrImageElement.alt = 'Erro inesperado ao carregar dados.';
             }
         }
 
-        // Fetch immediately and then every 3 seconds
+        // Fetch data on page load
         fetchLatestVideoInfo();
-        setInterval(fetchLatestVideoInfo, 3000);
+
+        // Optional: Set up a polling interval to refresh data periodically
+        // Or, for a more advanced setup, use Supabase Realtime subscriptions
+        // setInterval(fetchLatestVideoInfo, 10000); // Refresh every 10 seconds
+
     </script>
 </body>
 </html>

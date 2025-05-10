@@ -8,8 +8,9 @@ import supabase from './supabaseClient.js'; // Assuming supabaseClient.js is con
 const OBS_OUTPUT_DIR = path.resolve('./obs-output');
 const PUBLIC_DIR = path.resolve('./public'); // Main public directory for Vercel
 const QRCODE_DIR = path.resolve(PUBLIC_DIR, 'qrcodes'); // QR codes inside public
-const LATEST_INFO_FILE = path.resolve(PUBLIC_DIR, 'latest_booth_info.json');
 const SUPABASE_BUCKET = 'videos'; // The name of your Supabase bucket
+const QR_CODE_LOCAL_PATH_PREFIX = path.join(process.cwd(), 'public', 'qrcodes');
+const QR_CODE_SUPABASE_PATH_PREFIX = 'public/qrcodes_live'; // Store QRs in a 'public' prefixed folder for RLS
 
 // Load environment variables if .env file exists
 try {
@@ -32,9 +33,11 @@ if (!MOBILE_SHARE_LINK_BASE_URL) {
     console.error('CRITICAL ERROR: MOBILE_SHARE_LINK_BASE_URL is not set. Share links in mobile_template.js will be incorrect.');
 }
 
-
 // Ensure necessary directories exist
 fs.ensureDirSync(QRCODE_DIR);
+if (!fs.existsSync(QR_CODE_LOCAL_PATH_PREFIX)) {
+    fs.mkdirSync(QR_CODE_LOCAL_PATH_PREFIX, { recursive: true });
+}
 
 // --- File Watcher Logic ---
 console.log(`Watching for new video files in: ${OBS_OUTPUT_DIR}`);
@@ -76,7 +79,7 @@ watcher
                 .from(SUPABASE_BUCKET)
                 .upload(supabasePath, fileContent, {
                     cacheControl: '3600',
-                    upsert: false, 
+                    upsert: true,
                     contentType: 'video/mp4'
                 });
 
@@ -85,39 +88,66 @@ watcher
             }
             console.log(`   Upload successful: ${uploadData.path}`);
 
-            const { data: urlData } = supabase.storage
+            const { data: publicUrlData } = supabase.storage
                 .from(SUPABASE_BUCKET)
-                .getPublicUrl(supabasePath);
+                .getPublicUrl(uploadData.path);
 
-            if (!urlData || !urlData.publicUrl) {
-                 throw new Error('Could not get public URL from Supabase.');
-            }
-            const publicVideoUrl = urlData.publicUrl;
+            const publicVideoUrl = publicUrlData.publicUrl;
             console.log(`   Public Video URL: ${publicVideoUrl}`);
 
-            // URL for the QR code to encode: links to the Vercel-hosted mobile_template.html
-            // The slug is passed as a query parameter
-            const qrCodeDataUrl = `${APP_PUBLIC_URL}/mobile_template.html?video=${slug}`;
-            console.log(`   QR Code Data URL (for encoding): ${qrCodeDataUrl}`);
-
-            const qrCodeFileName = `qr_${slug}.png`;
-            const qrCodeFilePath = path.join(QRCODE_DIR, qrCodeFileName);
-            await QRCode.toFile(qrCodeFilePath, qrCodeDataUrl, { errorCorrectionLevel: 'H' });
-            console.log(`   QR Code generated: ${qrCodeFilePath}`);
+            // --- QR Code Generation & Upload ---
+            const qrCodeContent = `${process.env.APP_PUBLIC_URL}/mobile_template.html?video=${slug}`;
+            const localQrCodeFilePath = path.join(QR_CODE_LOCAL_PATH_PREFIX, `qr_${slug}.png`);
             
-            // Relative path for the QR code to be used in latest_booth_info.json (served from public root)
-            const qrCodeUrlForBoothJson = `/qrcodes/${qrCodeFileName}`; 
+            await QRCode.toFile(localQrCodeFilePath, qrCodeContent, {
+                color: {
+                    dark: '#000000', // Black dots
+                    light: '#FFFFFF'  // White background
+                },
+                width: 256
+            });
+            console.log(`   QR Code generated locally: ${localQrCodeFilePath}`);
 
-            // --- Update latest_booth_info.json ---
-            const boothInfo = {
-                videoUrl: publicVideoUrl,
-                qrCodeUrl: qrCodeUrlForBoothJson, // This is relative to public root
-                videoSlug: slug,
-                timestamp: Date.now()
-            };
-            await fs.writeJson(LATEST_INFO_FILE, boothInfo);
-            console.log(`   Updated ${LATEST_INFO_FILE} with new video info.`);
-            
+            const qrFileContent = await fs.readFile(localQrCodeFilePath);
+            const supabaseQrPath = `${QR_CODE_SUPABASE_PATH_PREFIX}/qr_${slug}.png`;
+
+            const { data: qrUploadData, error: qrUploadError } = await supabase.storage
+                .from(SUPABASE_BUCKET) // Using the same 'videos' bucket for QR codes for simplicity
+                .upload(supabaseQrPath, qrFileContent, {
+                    cacheControl: '3600',
+                    upsert: true,
+                    contentType: 'image/png'
+                });
+
+            if (qrUploadError) {
+                throw new Error(`Supabase QR Upload Error: ${qrUploadError.message}`);
+            }
+            console.log(`   QR Code upload successful: ${qrUploadData.path}`);
+
+            const { data: publicQrUrlData } = supabase.storage
+                .from(SUPABASE_BUCKET)
+                .getPublicUrl(qrUploadData.path);
+            const publicQrCodeUrl = publicQrUrlData.publicUrl;
+            console.log(`   Public QR Code URL: ${publicQrCodeUrl}`);
+
+            // --- Update Supabase 'booth_live_status' table ---
+            const { data: dbData, error: dbError } = await supabase
+                .from('booth_live_status')
+                .upsert({
+                    id: 'current_status', // Specific row to update
+                    video_slug: slug,
+                    video_url: publicVideoUrl,
+                    qr_code_url: publicQrCodeUrl,
+                    updated_at: new Date().toISOString() // Keep for now, or rely on DB default if preferred
+                })
+                .select();
+
+            if (dbError) {
+                console.error('Supabase DB update error:', dbError);
+                throw new Error(`Supabase DB update error: ${dbError.message}`);
+            }
+            console.log('   Supabase booth_live_status table updated:', dbData);
+
             console.log(`--- Processing complete for ${fileName} ---`);
 
         } catch (error) {
@@ -126,7 +156,6 @@ watcher
     })
     .on('error', error => console.error(`Watcher error: ${error}`))
     .on('ready', () => console.log('Initial scan complete. Ready for changes...'));
-
 
 // Graceful shutdown
 process.on('SIGINT', () => {
