@@ -36,8 +36,36 @@
         const qrImageElement = document.getElementById('qrCodeImage');
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // Function to update the display elements
+        function updateDisplay(record) {
+            if (!record) {
+                console.warn('UpdateDisplay called with no record.');
+                return;
+            }
+            console.log('Updating display with new record:', record);
+            if (record.video_url) {
+                if (videoElement.src !== record.video_url) {
+                    videoElement.src = record.video_url;
+                    videoElement.load(); // Load the new video source
+                    videoElement.play().catch(e => console.warn("Autoplay was prevented for booth video:", e));
+                }
+            } else {
+                console.warn('No video_url found in new record.');
+            }
+            
+            if (record.qr_code_url) {
+                if (qrImageElement.src !== record.qr_code_url) {
+                    qrImageElement.src = record.qr_code_url;
+                }
+                qrImageElement.alt = `QR Code para Video ${record.video_slug || ''}`;
+            } else {
+                console.warn('No qr_code_url found in new record.');
+                qrImageElement.alt = 'QR code indisponível.';
+            }
+        }
+
         async function fetchLatestVideoInfo() {
-            console.log('Fetching latest video info from Supabase...');
+            console.log('Fetching initial video info from Supabase...');
             try {
                 const { data, error } = await supabase
                     .from('booth_live_status')
@@ -46,31 +74,16 @@
                     .single(); // We expect only one row
 
                 if (error) {
-                    console.error('Error fetching video info:', error);
+                    console.error('Error fetching initial video info:', error);
                     qrImageElement.alt = 'Erro ao carregar QR code.';
                     videoElement.poster = ''; // Or some error image
                     return;
                 }
 
                 if (data) {
-                    console.log('Data received:', data);
-                    if (data.video_url) {
-                        videoElement.src = data.video_url;
-                        videoElement.load(); // Load the new video source
-                        videoElement.play().catch(e => console.warn("Autoplay was prevented for booth video:", e));
-                    } else {
-                        console.warn('No video_url found in Supabase data.');
-                    }
-                    
-                    if (data.qr_code_url) {
-                        qrImageElement.src = data.qr_code_url;
-                        qrImageElement.alt = `QR Code para Video ${data.video_slug || ''}`;
-                    } else {
-                        console.warn('No qr_code_url found in Supabase data.');
-                        qrImageElement.alt = 'QR code indisponível.';
-                    }
+                    updateDisplay(data); // Update display with fetched data
                 } else {
-                    console.warn('No data found in booth_live_status for id current_status.');
+                    console.warn('No initial data found in booth_live_status for id current_status.');
                     qrImageElement.alt = 'Informação do vídeo não encontrada.';
                 }
             } catch (err) {
@@ -79,12 +92,42 @@
             }
         }
 
-        // Fetch data on page load
+        // Fetch initial data on page load
         fetchLatestVideoInfo();
 
-        // Optional: Set up a polling interval to refresh data periodically
-        // Or, for a more advanced setup, use Supabase Realtime subscriptions
-        // setInterval(fetchLatestVideoInfo, 10000); // Refresh every 10 seconds
+        // --- Supabase Realtime Subscription ---
+        console.log('Setting up Supabase Realtime subscription...');
+        const channel = supabase.channel('booth-live-updates');
+
+        channel
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'booth_live_status',
+                    filter: 'id=eq.current_status' // Only listen to changes for our specific row
+                },
+                (payload) => {
+                    console.log('Realtime: Change received!', payload);
+                    if (payload.new) {
+                        updateDisplay(payload.new); // Update display with new data from subscription
+                    }
+                }
+            )
+            .subscribe((status, err) => {
+                if (status === 'SUBSCRIBED') {
+                    console.log('Successfully subscribed to booth-live-updates channel!');
+                } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                    console.error('Failed to subscribe or channel error:', status, err);
+                } else {
+                    console.log('Subscription status:', status);
+                }
+            });
+
+        // Note: For a long-running page like a booth display, explicit unsubscribing
+        // might not be critical, but in other contexts, you'd call channel.unsubscribe()
+        // when the component unmounts or page is closed.
 
     </script>
 </body>
