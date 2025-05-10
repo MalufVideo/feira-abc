@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Seu Vídeo Personalizado!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00ff9d',
+                        secondary: '#0066ff',
+                        purpleish: '#9370DB',
+                        dark: '#0a0a0a',
+                        darker: '#020202',
+                        'light-text': '#e0e0e0',
+                        'medium-text': '#a0a0a0',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    animation: {
+                        'subtle-float': 'subtle-float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        'subtle-float': {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-8px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #020202; color: #e0e0e0; margin: 0; padding: 0; overflow-x: hidden; scroll-behavior: smooth; }
+        .gradient-text { background: linear-gradient(90deg, #00ff9d, #0066ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .glow-text-primary { text-shadow: 0 0 12px rgba(0, 255, 157, 0.6); }
+        .btn-primary-custom { background: linear-gradient(90deg, #00ff9d, #0066ff); color: #050505; transition: all 0.3s ease; padding: 0.625rem 1.25rem; border-radius: 0.3125rem; font-weight: bold; text-align: center; display: inline-block; text-decoration: none; }
+        .btn-primary-custom:hover { opacity: 0.9; box-shadow: 0 5px 15px rgba(0, 255, 157, 0.3); transform: translateY(-2px); }
+        .btn-share-base { display: inline-flex; justify-content: center; align-items: center; width: 40px; height: 40px; color: white; text-decoration: none; border-radius: 50%; font-weight: bold; transition: all 0.3s ease; }
+        .whatsapp-btn { background-color: #25D366; }
+        .whatsapp-btn:hover { background-color: #1DA851; }
+        .facebook-btn { background-color: #1877F2; }
+        .facebook-btn:hover { background-color: #1158B4; }
+        .instagram-btn { background: linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D, #F56040, #F77737, #FCAF45, #FFDC80); }
+        .instagram-btn:hover { opacity: 0.9; }
+        .twitter-btn { background-color: #000000; border: 1px solid #ffffff; }
+        .twitter-btn i { color: #ffffff; }
+        .twitter-btn:hover { background-color: #333333; }
+        .linkedin-btn { background-color: #0A66C2; }
+        .linkedin-btn:hover { background-color: #004182; }
+        .download-btn { background-color: #6c757d; }
+        .download-btn:hover { background-color: #5a6268; }
+    </style>
+</head>
+<body class="bg-darker text-light-text font-sans">
+    <div class="min-h-screen flex flex-col items-center p-4">
+
+        <video id="userVideo" class="w-full max-w-2xl mt-2.5 rounded-lg shadow-lg" controls autoplay playsinline loop muted>
+            Seu navegador não suporta a tag de vídeo.
+        </video>
+
+        <div class="share mt-5 flex flex-wrap justify-center gap-3">
+            <a id="whatsappShare" class="btn-share-base whatsapp-btn" href="#" title="Compartilhar no WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            <a id="facebookShare" class="btn-share-base facebook-btn" href="#" title="Compartilhar no Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a id="instagramShare" class="btn-share-base instagram-btn" href="#" title="Compartilhar no Instagram"><i class="fab fa-instagram"></i></a>
+            <a id="twitterShare" class="btn-share-base twitter-btn" href="#" title="Compartilhar no Twitter"><i class="fab fa-twitter"></i></a>
+            <a id="linkedinShare" class="btn-share-base linkedin-btn" href="#" title="Compartilhar no LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+            <a id="downloadVideo" class="btn-share-base download-btn" href="#" title="Baixar Vídeo"><i class="fas fa-download"></i></a>
+        </div>
+
+        <div class="mt-8 w-full max-w-2xl text-center">
+            <h1 class="text-3xl md:text-4xl font-bold gradient-text glow-text-primary mb-8">
+                Revolucione suas produções
+            </h1>
+            <div class="space-y-6">
+                <div class="bg-dark p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold text-primary mb-3">Estúdio e Tecnologia</h2>
+                    <p class="text-medium-text mb-4">LED/Disguise/Projeção/Unreal</p>
+                    <a href="https://onav.com.br" target="_blank" rel="noopener noreferrer" class="btn-primary-custom">On + Av</a>
+                </div>
+                <div class="bg-dark p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold text-primary mb-3">Media Servers</h2>
+                    <a href="https://disguise.one" target="_blank" rel="noopener noreferrer" class="btn-primary-custom">Disguise</a>
+                </div>
+                <div class="bg-dark p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold text-primary mb-3">Cinebot Draco</h2>
+                    <a href="https://rubelabs.com" target="_blank" rel="noopener noreferrer" class="btn-primary-custom">RubeLabs</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const videoSlug = params.get('video'); // e.g., 2025-05-09 22-01-48_1746838921971
+
+            if (!videoSlug) {
+                console.error('Video slug not found in URL parameters.');
+                // Optionally display an error message to the user
+                document.body.innerHTML = '<p style="color:white; text-align:center; padding-top: 50px;">Erro: Vídeo não encontrado. Verifique o link.</p>';
+                return;
+            }
+
+            // Construct the Supabase video URL
+            // IMPORTANT: Replace with your actual Supabase project ID and bucket name if different
+            const supabaseProjectId = 'cgcpaactxmygmdxmqyhz'; // From memory
+            const supabaseBucketName = 'videos'; // From watcher.js
+            const videoFileName = `${videoSlug}.mp4`; // Assuming watcher.js saves as SLUG.mp4
+            const supabaseVideoUrl = `https://${supabaseProjectId}.supabase.co/storage/v1/object/public/${supabaseBucketName}/${videoFileName}`;
+
+            const videoElement = document.getElementById('userVideo');
+            videoElement.src = supabaseVideoUrl;
+            videoElement.load();
+            videoElement.play().catch(e => console.warn('Autoplay prevented:', e));
+
+            // Use the current page's origin for the shareable link base URL
+            // This aligns with APP_PUBLIC_URL and MOBILE_SHARE_LINK_BASE_URL being the same Vercel URL.
+            const shareablePageUrl = `${window.location.origin}/mobile_template.html?video=${videoSlug}`;
+
+            // Update share links
+            const shareButtons = {
+                whatsapp: document.getElementById('whatsappShare'),
+                facebook: document.getElementById('facebookShare'),
+                instagram: document.getElementById('instagramShare'),
+                twitter: document.getElementById('twitterShare'),
+                linkedin: document.getElementById('linkedinShare'),
+                download: document.getElementById('downloadVideo'),
+            };
+
+            const logApiBase = `/api/log-share?video=${videoSlug}&platform=`;
+
+            shareButtons.whatsapp.onclick = () => {
+                fetch(logApiBase + 'whatsapp');
+                window.open(`whatsapp://send?text=Confira meu vídeo: ${encodeURIComponent(shareablePageUrl)}`, '_blank');
+                return false;
+            };
+            shareButtons.facebook.onclick = () => {
+                fetch(logApiBase + 'facebook');
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareablePageUrl)}`, '_blank', 'width=600,height=400');
+                return false;
+            };
+            shareButtons.instagram.onclick = () => {
+                fetch(logApiBase + 'instagram');
+                alert(`Copie este link para compartilhar no Instagram: ${shareablePageUrl}`);
+                // Instagram doesn't have a direct share URL, so guide user to copy link
+                // You could also try to use navigator.clipboard.writeText if appropriate
+                return false;
+            };
+            shareButtons.twitter.onclick = () => {
+                fetch(logApiBase + 'twitter');
+                window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareablePageUrl)}&text=Confira meu vídeo!`, '_blank', 'width=600,height=300');
+                return false;
+            };
+            shareButtons.linkedin.onclick = () => {
+                fetch(logApiBase + 'linkedin');
+                window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareablePageUrl)}`, '_blank', 'width=600,height=600');
+                return false;
+            };
+            shareButtons.download.onclick = () => {
+                fetch(logApiBase + 'download');
+                // For direct download, ensure Supabase serves with appropriate headers or use a proxy
+                // Simplest is to link to the video URL which might open in browser or download based on headers
+                window.location.href = supabaseVideoUrl; // Or use a version that forces download
+                return false;
+            };
+        });
+    </script>
+</body>
+</html>

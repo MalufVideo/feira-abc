@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Booth Display</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 95vh; background-color: #f0f0f0; margin: 0; text-align: center; }
+        #video-container { margin-bottom: 20px; border: 5px solid #333; border-radius: 10px; background-color: #000; }
+        video { max-width: 80vw; max-height: 60vh; display: block; }
+        #qr-container img { max-width: 80vw; max-height: 30vh; border: 5px solid #333; border-radius: 10px;}
+        h1 { color: #333; }
+        p { color: #555; font-size: 1.2em;}
+    </style>
+</head>
+<body>
+    <h1>Escaneie o QR Code para compartilhar seu vídeo!</h1>
+    <div id="video-container">
+        <video id="boothVideo" controls autoplay muted playsinline></video>
+    </div>
+    <div id="qr-container">
+        <img id="qrImage" src="" alt="QR Code">
+    </div>
+    <p>Aponte a câmera do seu celular para o QR Code acima.</p>
+
+    <script>
+        const videoElement = document.getElementById('boothVideo');
+        const qrImageElement = document.getElementById('qrImage');
+        let lastVideoTimestamp = 0;
+
+        async function fetchLatestVideoInfo() {
+            try {
+                // Add cache buster to ensure fresh data
+                const response = await fetch('/latest_booth_info.json?t=' + new Date().getTime());
+                if (!response.ok) {
+                    console.error('Failed to fetch latest video info, status:', response.status);
+                    if (response.status === 404 && lastVideoTimestamp === 0) {
+                        // Initial load and no info yet, show placeholder or message
+                        videoElement.src = ''; // Or a placeholder video
+                        qrImageElement.src = ''; // Or a placeholder QR
+                        qrImageElement.alt = 'Aguardando o próximo vídeo...';
+                    }
+                    return;
+                }
+                const data = await response.json();
+
+                if (data.timestamp && data.timestamp > lastVideoTimestamp) {
+                    console.log('New video info found:', data);
+                    lastVideoTimestamp = data.timestamp;
+                    videoElement.src = data.videoUrl;
+                    qrImageElement.src = data.qrCodeUrl;
+                    qrImageElement.alt = 'QR Code para o vídeo ' + data.videoSlug;
+                    videoElement.load(); // Important to load the new source
+                    videoElement.play().catch(e => console.warn('Autoplay prevented:', e));
+                }
+            } catch (error) {
+                console.error('Error fetching or processing latest video info:', error);
+            }
+        }
+
+        // Fetch immediately and then every 3 seconds
+        fetchLatestVideoInfo();
+        setInterval(fetchLatestVideoInfo, 3000);
+    </script>
+</body>
+</html>

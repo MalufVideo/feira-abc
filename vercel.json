@@ -1,6 +1,14 @@
 {
   "version": 2,
-  "routes": [
-    { "src": "/admin", "dest": "/admin/index.html" }
-  ]
+  "public": "public",
+  "rewrites": [
+    { "source": "/", "destination": "/booth_display.html" },
+    { "source": "/admin", "destination": "/admin.html" }
+  ],
+  "functions": {
+    "api/*.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  }
 }
