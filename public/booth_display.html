@@ -6,16 +6,74 @@
     <title>Video Booth Display</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 95vh; background-color: #f0f0f0; margin: 0; text-align: center; }
-        #video-container { margin-bottom: 20px; border: 5px solid #333; border-radius: 10px; background-color: #000; }
-        video { max-width: 80vw; max-height: 60vh; display: block; }
-        #qr-container img { max-width: 80vw; max-height: 30vh; border: 5px solid #333; border-radius: 10px;}
-        h1 { color: #333; }
-        p { color: #555; font-size: 1.2em;}
+        :root {
+            --bg: #f0f0f0;
+            --text: #333;
+            --subtext: #555;
+            --border: #333;
+            --container-bg: #000;
+        }
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 95vh;
+            background-color: var(--bg);
+            margin: 0;
+            text-align: center;
+            color: var(--text);
+        }
+        #video-container {
+            margin-bottom: 20px;
+            border: 5px solid var(--border);
+            border-radius: 10px;
+            background-color: var(--container-bg);
+        }
+        video {
+            max-width: 80vw;
+            max-height: 60vh;
+            display: block;
+        }
+        #qr-container img {
+            max-width: 80vw;
+            max-height: 30vh;
+            border: 5px solid var(--border);
+            border-radius: 10px;
+        }
+        h1 { color: var(--text); }
+        p { color: var(--subtext); font-size: 1.2em; }
+
+        /* Dark mode overrides */
+        .dark-mode {
+            --bg: #181a1b;
+            --text: #f0f0f0;
+            --subtext: #cccccc;
+            --border: #444;
+            --container-bg: #222;
+        }
+        .dark-toggle {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            background: var(--container-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 16px;
+            cursor: pointer;
+            z-index: 1000;
+            font-size: 1em;
+            transition: background 0.3s, color 0.3s;
+        }
+        .dark-toggle:focus {
+            outline: 2px solid var(--subtext);
+        }
     </style>
 </head>
-<body>
-    <h1>Escaneie o QR Code para compartilhar seu vídeo!</h1>
+<body class="dark-mode">
+    <h1>On+Av</h1>
     <div id="video-container">
         <video id="boothVideo" controls autoplay muted playsinline></video>
     </div>
