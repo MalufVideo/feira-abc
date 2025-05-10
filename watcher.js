@@ -69,8 +69,8 @@ watcher
 
             console.log(`   Uploading ${fileName} to Supabase...`);
             const fileContent = await fs.readFile(filePath);
-            // Use a simpler Supabase path, just the filename, or slugified filename for uniqueness
-            const supabasePath = `${slug}${path.extname(fileName)}`; // e.g., myvideo_timestamp123.mp4
+            // Prepend 'public/' to the Supabase path to match RLS policy
+            const supabasePath = `public/${slug}${path.extname(fileName)}`; // e.g., public/myvideo_timestamp123.mp4
 
             const { data: uploadData, error: uploadError } = await supabase.storage
                 .from(SUPABASE_BUCKET)
