@@ -109,15 +109,11 @@
                 return;
             }
 
-            // Construct the Supabase video URL
-            // IMPORTANT: Replace with your actual Supabase project ID and bucket name if different
-            const supabaseProjectId = 'cgcpaactxmygmdxmqyhz'; // From memory
-            const supabaseBucketName = 'videos'; // From watcher.js
-            const videoFileName = `${videoSlug}.mp4`; // Assuming watcher.js saves as SLUG.mp4
-            const supabaseVideoUrl = `https://${supabaseProjectId}.supabase.co/storage/v1/object/public/${supabaseBucketName}/${videoFileName}`;
-
+            // URL-encode the slug to handle spaces or other special characters
+            const encodedVideoSlug = encodeURIComponent(videoSlug);
             const videoElement = document.getElementById('userVideo');
-            videoElement.src = supabaseVideoUrl;
+            const videoUrl = `https://cgcpaactxmygmdxmqyhz.supabase.co/storage/v1/object/public/videos/public/${encodedVideoSlug}.mp4`;
+            videoElement.src = videoUrl;
             videoElement.load();
             videoElement.play().catch(e => console.warn('Autoplay prevented:', e));
 
@@ -168,7 +164,7 @@
                 fetch(logApiBase + 'download');
                 // For direct download, ensure Supabase serves with appropriate headers or use a proxy
                 // Simplest is to link to the video URL which might open in browser or download based on headers
-                window.location.href = supabaseVideoUrl; // Or use a version that forces download
+                window.location.href = videoUrl; // Or use a version that forces download
                 return false;
             };
         });
