@@ -1,17 +1,25 @@
 import OBSWebSocket from 'obs-websocket-js';
 import { Builder, By } from 'selenium-webdriver';
+import { Client as OSCClient, Message as OSCMessage } from 'node-osc';
 
 // OBS WebSocket connection details from the image
-const OBS_ADDRESS = '172.21.112.1';
+const OBS_ADDRESS = '192.168.1.36';
 const OBS_PORT = '4455';
-const OBS_PASSWORD = '1ESQ6Z3YOhNYuUn0';
+const OBS_PASSWORD = 'Hh4OkXGkTV6ccA3v';
 
 // Selenium click coordinates
-const CLICK_X = 838;
-const CLICK_Y = 769; // Adjusted 20 pixels down from original 749
+const CLICK_X = 838; // Assuming this is still correct from your original file
+const CLICK_Y = 769; // Assuming this is still correct from your original file
+
+// OSC Connection Details
+const OSC_HOST = '192.168.1.74';
+const OSC_PORT = 7401;
 
 // Initialize OBS WebSocket
 const obs = new OBSWebSocket();
+
+// Initialize OSC Client
+const oscClient = new OSCClient(OSC_HOST, OSC_PORT);
 
 // Function to connect to OBS WebSocket
 async function connectToOBS() {
@@ -64,7 +72,7 @@ async function performSeleniumClick() {
                 if (error) {
                     console.error(`Error executing Python script: ${error.message}`);
                     console.error(`stderr: ${stderr}`);
-                    resolve(false);
+                    resolve(false); // Resolve with false on error to not break the main flow critically
                     return;
                 }
                 
@@ -78,6 +86,17 @@ async function performSeleniumClick() {
         });
     } catch (error) {
         console.error('Failed to perform click using Python script:', error);
+        return false; // Return false on error
+    }
+}
+
+// Function to send OSC message
+async function sendOSCMessage(address, ...args) {
+    try {
+        await oscClient.send(new OSCMessage(address, args));
+        return true;
+    } catch (error) {
+        console.error('Failed to send OSC message:', error);
         return false;
     }
 }
@@ -97,26 +116,64 @@ async function controlRecording() {
             return { success: false, message: 'Failed to start recording' };
         }
         
-        // Perform the Selenium click
+        // Perform the Selenium click (non-blocking)
         performSeleniumClick().catch(error => {
             console.error('Error during Selenium click:', error);
+            // This ensures that an error in the click doesn't stop the OSC/recording flow
         });
+
+        // Send OSC message 1: /d3/showcontrol/nextsection Float 1
+        try {
+            await sendOSCMessage('/d3/showcontrol/nextsection', 1.0);
+        } catch (oscError) {
+            console.error('Failed to send initial OSC message:', oscError);
+        }
         
-        // Wait for 10 seconds
-        await new Promise(resolve => setTimeout(resolve, 10000));
+        // Wait for 3 seconds, then send OSC message 2
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        try {
+            await sendOSCMessage('/d3/showcontrol/nextsection', 2.0);
+        } catch (oscError) {
+            console.error('Failed to send second OSC message:', oscError);
+        }
+
+        // Wait for another 3 seconds (total 6 seconds from start of OSC), then send OSC message 3
+        await new Promise(resolve => setTimeout(resolve, 3000)); // 3 more seconds
+        try {
+            await sendOSCMessage('/d3/showcontrol/nextsection', 3.0);
+        } catch (oscError) {
+            console.error('Failed to send third OSC message:', oscError);
+        }
+
+        // Wait for the remainder of the 10-second recording period
+        // Initial OSC was at 0s, second at 3s, third at 6s.
+        // If total recording time is 10s, wait for 10 - 6 = 4 more seconds.
+        await new Promise(resolve => setTimeout(resolve, 4000)); 
         
         // Stop recording
         const recordingStopped = await stopRecording();
         if (!recordingStopped) {
+            // Disconnect from OBS if stopping recording fails but OBS is connected
+            if (obs && obs.socket && obs.socket.readyState === 1) {
+                await obs.disconnect();
+            }
             return { success: false, message: 'Failed to stop recording' };
         }
         
         // Disconnect from OBS
         await obs.disconnect();
         
-        return { success: true, message: 'Recording completed successfully' };
+        return { success: true, message: 'Recording and OSC control completed successfully' };
     } catch (error) {
         console.error('Error in control recording process:', error);
+        if (obs && obs.socket && obs.socket.readyState === 1) {
+            try {
+                await obs.disconnect();
+                console.log('Disconnected from OBS due to error.');
+            } catch (disconnectError) {
+                console.error('Error disconnecting from OBS during error handling:', disconnectError);
+            }
+        }
         return { success: false, message: `Error: ${error.message || 'Unknown error'}` };
     }
 }
