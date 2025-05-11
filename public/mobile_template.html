@@ -105,206 +105,230 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Determine videoSlug: try query param, then path
-            const queryParams = new URLSearchParams(window.location.search);
-            let determinedVideoSlug = queryParams.get('video');
+    document.addEventListener('DOMContentLoaded', () => {
+      /* ---------- 1. Same slug resolution as before ------------------------ */
+      const queryParams      = new URLSearchParams(location.search);
+      let   videoSlug        = queryParams.get('video');
 
-            if (!determinedVideoSlug) {
-                const pathName = window.location.pathname;
-                const pathSegments = pathName.split('/'); // e.g., ["", "mobile", "some%20slug.html"]
-                if (pathSegments.length > 1) { // Ensure there's something after /mobile/
-                    let lastSegment = pathSegments[pathSegments.length - 1];
-                    if (lastSegment.endsWith('.html')) {
-                        lastSegment = lastSegment.slice(0, -'.html'.length); // "some%20slug"
-                    }
-                    if (lastSegment) { 
-                        try {
-                            determinedVideoSlug = decodeURIComponent(lastSegment);
-                        } catch (e) {
-                            console.error('Error decoding video slug from path:', lastSegment, e);
-                        }
-                    }
+      if (!videoSlug) {
+        const pathName = window.location.pathname;
+        const pathSegments = pathName.split('/'); // e.g., ["", "mobile", "some%20slug.html"]
+        if (pathSegments.length > 1) { // Ensure there's something after /mobile/
+            let lastSegment = pathSegments[pathSegments.length - 1];
+            if (lastSegment.endsWith('.html')) {
+                lastSegment = lastSegment.slice(0, -'.html'.length); // "some%20slug"
+            }
+            if (lastSegment) {
+                try {
+                    videoSlug = decodeURIComponent(lastSegment);
+                } catch (e) {
+                    console.error('Error decoding video slug from path:', lastSegment, e);
                 }
             }
+        }
+      }
 
-            const videoSlug = determinedVideoSlug;
+      if (!videoSlug) {
+        document.body.innerHTML =
+          '<p style="color:white;text-align:center;padding-top:50px">Erro: vídeo não especificado.</p>';
+        return;
+      }
 
-            if (!videoSlug) {
-                console.error('Video slug not specified in URL (query or path).');
-                document.body.innerHTML = '<p style="color:white; text-align:center; padding-top: 50px;">Erro: Vídeo não especificado no link.</p>';
-                return;
-            }
+      /* ---------- 2. Prepare URLs & elements -------------------------------- */
+      const encodedVideoSlug = encodeURIComponent(videoSlug); // For Supabase URL
+      const videoUrl         = `https://cgcpaactxmygmdxmqyhz.supabase.co/storage/v1/object/public/videos/public/${encodedVideoSlug}.mp4`;
+      const shareablePageUrl = `https://abc.onav.com.br/mobile_template.html?video=${encodeURIComponent(videoSlug)}`;
+      const logApiBase       = `https://abc.onav.com.br/api/log-share?video=${videoSlug}&platform=`;
 
-            const encodedVideoSlug = encodeURIComponent(videoSlug); // For Supabase URL
-            const videoElement = document.getElementById('userVideo');
-            const videoUrl = `https://cgcpaactxmygmdxmqyhz.supabase.co/storage/v1/object/public/videos/public/${encodedVideoSlug}.mp4`;
-            videoElement.src = videoUrl;
-            videoElement.load();
-            videoElement.play().catch(e => console.warn('Autoplay prevented:', e));
+      const videoEl          = document.getElementById('userVideo');
+      videoEl.src            = videoUrl;
+      videoEl.load();
+      videoEl.play().catch(()=>{});
+      
+      fetch(`https://abc.onav.com.br/api/log-scan?video=${videoSlug}`).catch(e => console.warn('Error logging scan:', e));
+
+      /* ---------- 3. Share buttons ----------------------------------------- */
+      const shareBtn         = document.getElementById('shareVideo');   // yellow share-alt
+      const waBtn            = document.getElementById('whatsappShare');
+      const dlBtn            = document.getElementById('downloadVideo');
+
+      /* --- 3a. WhatsApp (any platform) --- */
+      waBtn.onclick = () => {
+        fetch(logApiBase+'whatsapp').catch(()=>{});
+        window.open(
+          `whatsapp://send?text=Confira%20meu%20vídeo%20em%20Produção%20Virtual%20da%20On%2BAv%2BRube%20na%20Semana%20ABC:%20${encodeURIComponent(shareablePageUrl)}`,
+          '_blank'
+        );
+        return false;
+      };
+
+      /* --- 3b. UNIVERSAL SHARE (tries “file share” on iOS, then falls back) --- */
+      shareBtn.onclick = async () => {
+        /* ---------- iOS 16.4+ file-sharing path ---------- */
+        const iOS      = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const canShareFile = navigator.canShare && navigator.canShare({ files: [] });
+
+        if (iOS && canShareFile) {
+          try {
+            shareBtn.classList.add('opacity-60','pointer-events-none');
+            shareBtn.querySelector('i').classList.add('animate-spin');
             
-            fetch(`https://abc.onav.com.br/api/log-scan?video=${videoSlug}`).catch(e => console.warn('Error logging scan:', e));
+            /* fetch video, turn into File, invoke share sheet */
+            const blob = await fetch(videoUrl, { mode: 'cors' }).then(r => r.blob());
+            const file = new File([blob], `${videoSlug}.mp4`, { type: 'video/mp4' });
 
-            // Construct shareablePageUrl using the canonical template and videoSlug as a query parameter
-            const shareablePageUrl = `https://abc.onav.com.br/mobile_template.html?video=${encodeURIComponent(videoSlug)}`;
+            await navigator.share({
+              title : 'Meu vídeo',
+              text  : 'Confira meu vídeo em Produção Virtual da On+Av+Rube na Semana ABC',
+              files : [file]                 // <-- magic: opens native share sheet with the file ready
+            });
 
-            const shareButtons = {
-                whatsapp: document.getElementById('whatsappShare'),
-                download: document.getElementById('downloadVideo'),
-            };
+            fetch(logApiBase+'ios_fileshare').catch(()=>{});
+          } catch(e) {
+            console.warn('iOS file share falhou, caindo para instruções…', e);
+            showInstructionModal();
+          } finally {
+            shareBtn.classList.remove('opacity-60','pointer-events-none');
+            shareBtn.querySelector('i').classList.remove('animate-spin');
+          }
+          return false;
+        }
 
-            // Use absolute URL for API endpoints to ensure they work on the custom domain
-            const logApiBase = `https://abc.onav.com.br/api/log-share?video=${videoSlug}&platform=`;
+        /* ---------- Modern browsers with Web-Share (but no file support) ---------- */
+        if (navigator.share) {
+          fetch(logApiBase+'webshare').catch(()=>{});
+          navigator.share({
+            title: 'Meu vídeo',
+            text : 'Confira meu vídeo em Produção Virtual da On+Av+Rube na Semana ABC',
+            url  : shareablePageUrl
+          }).catch(()=>{});
+          return false;
+        }
 
-            shareButtons.whatsapp.onclick = () => {
-                fetch(logApiBase + 'whatsapp');
-                window.open(`whatsapp://send?text=Confira meu vídeo em Produção Virtual da On+Av+Rube na Semana ABC: ${encodeURIComponent(shareablePageUrl)}`,'_blank');
-                return false;
-            };
+        /* ---------- Fallback: custom instructions modal ---------- */
+        showInstructionModal();
+        return false;
+      };
 
-            // Web Share API button
-            const shareBtn = document.getElementById('shareVideo');
-            if (navigator.share) {
-                shareBtn.style.display = '';
-                shareBtn.onclick = () => {
-                    fetch(logApiBase + 'webshare');
-                    navigator.share({
-                        title: 'Meu vídeo',
-                        text: 'Confira meu vídeo em Produção Virtual da On+Av+Rube na Semana ABC',
-                        url: shareablePageUrl
-                    }).catch(()=>{});
-                    return false;
-                };
-            } else {
-                shareBtn.style.display = '';
-                shareBtn.onclick = () => {
-                    showShareModal();
-                    return false;
-                };
-            }
+      /* --- 3c. Download button (Android / desktop keeps your progress logic) --- */
+      const downloadStatusEl = document.getElementById('downloadStatus');
 
-            // Modal logic
-            function showShareModal() {
-                const modal = document.getElementById('shareModal');
-                const instructions = document.getElementById('shareInstructions');
-                let html = '';
-                if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                    html += '<div style="margin-bottom:1em;"><i class="fas fa-mobile-alt" style="font-size:2em;color:#25D366;"></i></div>';
-                    html += '<b>iPhone:</b><br>1. Clique em <b>Baixar Vídeo</b>.<br>2. Toque e segure o vídeo na nova aba e selecione <b>Salvar Vídeo</b>.<br>3. Compartilhe do app Fotos.';
-                } else if (/Android/i.test(navigator.userAgent)) {
-                    html += '<div style="margin-bottom:1em;"><i class="fab fa-android" style="font-size:2em;color:#3ddc84;"></i></div>';
-                    html += '<b>Android:</b><br>1. Clique em <b>Baixar Vídeo</b>.<br>2. O vídeo será salvo na sua galeria.<br>3. Compartilhe do app Fotos.';
-                } else {
-                    html += '<div style="margin-bottom:1em;"><i class="fas fa-desktop" style="font-size:2em;color:#00ff9d;"></i></div>';
-                    html += '<b>Computador:</b><br>1. Clique em <b>Baixar Vídeo</b>.<br>2. O vídeo será salvo na sua pasta de downloads.<br>3. Compartilhe pelo WhatsApp Web ou redes sociais.';
-                }
-                instructions.innerHTML = html;
-                modal.style.display = 'flex';
-            }
-            document.getElementById('closeShareModal').onclick = () => {
-                document.getElementById('shareModal').style.display = 'none';
-            };
-            document.getElementById('shareModal').onclick = (e) => {
-                if (e.target === document.getElementById('shareModal')) {
-                    document.getElementById('shareModal').style.display = 'none';
-                }
-            };
+      dlBtn.onclick = async () => {
+          fetch(logApiBase + 'download').catch(e => console.warn('Error logging download:', e));
+          
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-            const downloadStatusEl = document.getElementById('downloadStatus');
+          if (isIOS) {
+              downloadStatusEl.textContent = 'Abrindo vídeo...';
+              downloadStatusEl.style.display = 'block';
+              
+              // Open the video in a new tab. iOS will handle it, allowing tap-and-hold to save to Photos.
+              window.open(videoUrl, '_blank');
+              
+              downloadStatusEl.textContent = 'Vídeo aberto! No iPhone, toque e segure no vídeo na nova aba e escolha "Salvar Vídeo".';
+              
+              setTimeout(() => {
+                  downloadStatusEl.style.display = 'none';
+              }, 7000); 
 
-            shareButtons.download.onclick = async () => {
-                fetch(logApiBase + 'download').catch(e => console.warn('Error logging download:', e));
-                
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+          } else {
+              // For Android/Desktop, use the advanced download with progress
+              downloadStatusEl.textContent = 'Preparando download...';
+              downloadStatusEl.style.display = 'block';
 
-                if (isIOS) {
-                    downloadStatusEl.textContent = 'Abrindo vídeo...';
-                    downloadStatusEl.style.display = 'block';
-                    
-                    // Open the video in a new tab. iOS will handle it, allowing tap-and-hold to save to Photos.
-                    window.open(videoUrl, '_blank');
-                    
-                    // Update status message to guide the user
-                    // This message will be on the original tab
-                    downloadStatusEl.textContent = 'Vídeo aberto! No iPhone, toque e segure no vídeo na nova aba e escolha "Salvar Vídeo".';
-                    
-                    // Hide the message after a few seconds, or provide a way to dismiss it
-                    setTimeout(() => {
-                        downloadStatusEl.style.display = 'none';
-                    }, 7000); // Keep it longer for user to read
+              try {
+                  const response = await fetch(videoUrl);
+                  if (!response.ok) {
+                      throw new Error(`Falha ao buscar vídeo: ${response.status} ${response.statusText}`);
+                  }
+                  
+                  const contentLength = response.headers.get('content-length');
+                  let loaded = 0;
+                  
+                  const newResponse = new Response(new ReadableStream({
+                      async start(controller) {
+                          const reader = response.body.getReader();
+                          downloadStatusEl.textContent = 'Baixando vídeo... 0%';
+                          while (true) {
+                              const { done, value } = await reader.read();
+                              if (done) break;
+                              loaded += value.byteLength;
+                              if (contentLength) {
+                                  const percent = Math.round((loaded / contentLength) * 100);
+                                  downloadStatusEl.textContent = `Baixando vídeo... ${percent}%`;
+                              } else {
+                                  downloadStatusEl.textContent = `Baixando vídeo... (${(loaded / (1024*1024)).toFixed(1)} MB)`;
+                              }
+                              controller.enqueue(value);
+                          }
+                          controller.close();
+                      }
+                  }));
 
-                } else {
-                    // For Android/Desktop, use the advanced download with progress
-                    downloadStatusEl.textContent = 'Preparando download...';
-                    downloadStatusEl.style.display = 'block';
+                  const videoBlob = await newResponse.blob();
+                  const objectUrl = URL.createObjectURL(videoBlob);
 
-                    try {
-                        const response = await fetch(videoUrl);
-                        if (!response.ok) {
-                            throw new Error(`Falha ao buscar vídeo: ${response.status} ${response.statusText}`);
-                        }
-                        
-                        const contentLength = response.headers.get('content-length');
-                        let loaded = 0;
-                        
-                        const newResponse = new Response(new ReadableStream({
-                            async start(controller) {
-                                const reader = response.body.getReader();
-                                downloadStatusEl.textContent = 'Baixando vídeo... 0%';
-                                while (true) {
-                                    const { done, value } = await reader.read();
-                                    if (done) break;
-                                    loaded += value.byteLength;
-                                    if (contentLength) {
-                                        const percent = Math.round((loaded / contentLength) * 100);
-                                        downloadStatusEl.textContent = `Baixando vídeo... ${percent}%`;
-                                    } else {
-                                        downloadStatusEl.textContent = `Baixando vídeo... (${(loaded / (1024*1024)).toFixed(1)} MB)`;
-                                    }
-                                    controller.enqueue(value);
-                                }
-                                controller.close();
-                            }
-                        }));
+                  const a = document.createElement('a');
+                  a.style.display = 'none';
+                  a.href = objectUrl;
+                  
+                  let fileName = videoSlug.replace(/[^a-zA-Z0-9_.-]+/g, '_');
+                  if (!fileName.toLowerCase().endsWith('.mp4')) {
+                       fileName += '.mp4';
+                  }
+                  a.download = fileName; 
+                  
+                  document.body.appendChild(a);
+                  a.click();
+                  
+                  downloadStatusEl.textContent = 'Download iniciado!';
+                  setTimeout(() => {
+                      downloadStatusEl.style.display = 'none';
+                  }, 3000);
 
-                        const videoBlob = await newResponse.blob();
-                        const objectUrl = URL.createObjectURL(videoBlob);
+                  setTimeout(() => {
+                      URL.revokeObjectURL(objectUrl);
+                      document.body.removeChild(a);
+                  }, 100);
 
-                        const a = document.createElement('a');
-                        a.style.display = 'none';
-                        a.href = objectUrl;
-                        
-                        let fileName = videoSlug.replace(/[^a-zA-Z0-9_.-]+/g, '_');
-                        if (!fileName.toLowerCase().endsWith('.mp4')) {
-                             fileName += '.mp4';
-                        }
-                        a.download = fileName; 
-                        
-                        document.body.appendChild(a);
-                        a.click();
-                        
-                        downloadStatusEl.textContent = 'Download iniciado!';
-                        setTimeout(() => {
-                            downloadStatusEl.style.display = 'none';
-                        }, 3000);
+              } catch (error) {
+                  console.error('Erro ao baixar o vídeo:', error);
+                  downloadStatusEl.textContent = 'Erro no download.';
+                  setTimeout(() => {
+                       downloadStatusEl.style.display = 'none';
+                  }, 3000);
+                  alert('Houve um erro ao tentar baixar o vídeo. Por favor, tente novamente ou verifique sua conexão.');
+              }
+          }
+          return false; 
+      };
 
-                        setTimeout(() => {
-                            URL.revokeObjectURL(objectUrl);
-                            document.body.removeChild(a);
-                        }, 100);
+      /* ---------- 4. Helper: instruction modal (same as before) ------------------ */
+      function showInstructionModal () {
+        const modal         = document.getElementById('shareModal');
+        const instructions  = document.getElementById('shareInstructions');
+        let html = '';
 
-                    } catch (error) {
-                        console.error('Erro ao baixar o vídeo:', error);
-                        downloadStatusEl.textContent = 'Erro no download.';
-                        setTimeout(() => {
-                             downloadStatusEl.style.display = 'none';
-                        }, 3000);
-                        alert('Houve um erro ao tentar baixar o vídeo. Por favor, tente novamente ou verifique sua conexão.');
-                    }
-                }
-                return false; 
-            };
-        });
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+          html += '<div style="margin-bottom:1em"><i class="fas fa-mobile-alt" style="font-size:2em;color:#25D366"></i></div>';
+          html += '<b>iPhone:</b><br>1.&nbsp;Clique em&nbsp;<b>Baixar Vídeo</b>.<br>2.&nbsp;Toque e segure o vídeo na nova aba e escolha&nbsp;<b>Salvar Vídeo</b>.<br>3.&nbsp;Abra Fotos ➜ Compartilhar ➜ escolha o app que quiser (Instagram, TikTok, etc.).';
+        } else if (/Android/i.test(navigator.userAgent)) {
+          html += '<div style="margin-bottom:1em"><i class="fab fa-android" style="font-size:2em;color:#3ddc84"></i></div>';
+          html += '<b>Android:</b><br>1.&nbsp;Clique em&nbsp;<b>Baixar Vídeo</b>.<br>2.&nbsp;O vídeo será salvo na galeria.<br>3.&nbsp;Compartilhe direto da galeria.';
+        } else {
+          html += '<div style="margin-bottom:1em"><i class="fas fa-desktop" style="font-size:2em;color:#00ff9d"></i></div>';
+          html += '<b>Computador:</b><br>1.&nbsp;Clique em&nbsp;<b>Baixar Vídeo</b>.<br>2.&nbsp;Abra a pasta de downloads e compartilhe com WhatsApp Web ou redes sociais.';
+        }
+        instructions.innerHTML = html;
+        modal.style.display = 'flex';
+      }
+      document.getElementById('closeShareModal').onclick = () => {
+        document.getElementById('shareModal').style.display = 'none';
+      };
+      document.getElementById('shareModal').onclick = e => {
+        if (e.target.id === 'shareModal') e.currentTarget.style.display = 'none';
+      };
+    });
     </script>
 </body>
 </html>
