@@ -68,10 +68,6 @@
 
         <div class="share mt-5 flex flex-wrap justify-center gap-3">
             <a id="whatsappShare" class="btn-share-base whatsapp-btn" href="#" title="Compartilhar no WhatsApp"><i class="fab fa-whatsapp"></i></a>
-            <a id="facebookShare" class="btn-share-base facebook-btn" href="#" title="Compartilhar no Facebook"><i class="fab fa-facebook-f"></i></a>
-            <a id="instagramShare" class="btn-share-base instagram-btn" href="#" title="Compartilhar no Instagram"><i class="fab fa-instagram"></i></a>
-            <a id="twitterShare" class="btn-share-base twitter-btn" href="#" title="Compartilhar no Twitter"><i class="fab fa-twitter"></i></a>
-            <a id="linkedinShare" class="btn-share-base linkedin-btn" href="#" title="Compartilhar no LinkedIn"><i class="fab fa-linkedin-in"></i></a>
             <a id="downloadVideo" class="btn-share-base download-btn" href="#" title="Baixar Vídeo"><i class="fas fa-download"></i></a>
         </div>
 
@@ -127,10 +123,6 @@
             // Update share links
             const shareButtons = {
                 whatsapp: document.getElementById('whatsappShare'),
-                facebook: document.getElementById('facebookShare'),
-                instagram: document.getElementById('instagramShare'),
-                twitter: document.getElementById('twitterShare'),
-                linkedin: document.getElementById('linkedinShare'),
                 download: document.getElementById('downloadVideo'),
             };
 
@@ -140,28 +132,6 @@
             shareButtons.whatsapp.onclick = () => {
                 fetch(logApiBase + 'whatsapp');
                 window.open(`whatsapp://send?text=Confira meu vídeo: ${encodeURIComponent(shareablePageUrl)}`, '_blank');
-                return false;
-            };
-            shareButtons.facebook.onclick = () => {
-                fetch(logApiBase + 'facebook');
-                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareablePageUrl)}`, '_blank', 'width=600,height=400');
-                return false;
-            };
-            shareButtons.instagram.onclick = () => {
-                fetch(logApiBase + 'instagram');
-                alert(`Copie este link para compartilhar no Instagram: ${shareablePageUrl}`);
-                // Instagram doesn't have a direct share URL, so guide user to copy link
-                // You could also try to use navigator.clipboard.writeText if appropriate
-                return false;
-            };
-            shareButtons.twitter.onclick = () => {
-                fetch(logApiBase + 'twitter');
-                window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareablePageUrl)}&text=Confira meu vídeo!`, '_blank', 'width=600,height=300');
-                return false;
-            };
-            shareButtons.linkedin.onclick = () => {
-                fetch(logApiBase + 'linkedin');
-                window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareablePageUrl)}`, '_blank', 'width=600,height=600');
                 return false;
             };
             shareButtons.download.onclick = () => {
