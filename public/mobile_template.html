@@ -116,10 +116,13 @@
             videoElement.src = videoUrl;
             videoElement.load();
             videoElement.play().catch(e => console.warn('Autoplay prevented:', e));
+            
+            // Log scan event when user views the video
+            fetch(`https://abc.onav.com.br/api/log-scan?video=${videoSlug}`).catch(e => console.warn('Error logging scan:', e));
 
-            // Use the current page's origin for the shareable link base URL
-            // This aligns with APP_PUBLIC_URL and MOBILE_SHARE_LINK_BASE_URL being the same Vercel URL.
-            const shareablePageUrl = `${window.location.origin}/mobile_template.html?video=${videoSlug}`;
+            // Use the custom domain for the shareable link base URL
+            // This ensures consistent sharing links on abc.onav.com.br
+            const shareablePageUrl = `https://abc.onav.com.br/mobile/${videoSlug}.html`;
 
             // Update share links
             const shareButtons = {
@@ -131,7 +134,8 @@
                 download: document.getElementById('downloadVideo'),
             };
 
-            const logApiBase = `/api/log-share?video=${videoSlug}&platform=`;
+            // Use absolute URL for API endpoints to ensure they work on the custom domain
+            const logApiBase = `https://abc.onav.com.br/api/log-share?video=${videoSlug}&platform=`;
 
             shareButtons.whatsapp.onclick = () => {
                 fetch(logApiBase + 'whatsapp');

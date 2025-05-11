@@ -6,7 +6,7 @@ import supabase from './supabaseClient.js'; // Assuming supabaseClient.js is con
 
 // --- Configuration ---
 const OBS_OUTPUT_DIR = path.resolve('./obs-output');
-const PUBLIC_DIR = path.resolve('./public'); // Main public directory for Vercel
+const PUBLIC_DIR = path.resolve('./public'); // Main public directory for hosting
 const QRCODE_DIR = path.resolve(PUBLIC_DIR, 'qrcodes'); // QR codes inside public
 const SUPABASE_BUCKET = 'videos'; // The name of your Supabase bucket
 const QR_CODE_LOCAL_PATH_PREFIX = path.join(process.cwd(), 'public', 'qrcodes');
@@ -20,13 +20,13 @@ try {
     console.log('dotenv not found, skipping .env loading');
 }
 
-// Base URL for the mobile pages displayed on Vercel (for QR code)
+// Base URL for the mobile pages displayed on our domain (for QR code)
 const APP_PUBLIC_URL = process.env.APP_PUBLIC_URL;
 // Base URL for the final share links (e.g., link in WhatsApp message)
 const MOBILE_SHARE_LINK_BASE_URL = process.env.MOBILE_SHARE_LINK_BASE_URL;
 
 if (!APP_PUBLIC_URL) {
-    console.error('CRITICAL ERROR: APP_PUBLIC_URL is not set in environment variables. QR Codes will not work correctly. Set this to your Vercel app URL (e.g., https://yourapp.vercel.app)');
+    console.error('CRITICAL ERROR: APP_PUBLIC_URL is not set in environment variables. QR Codes will not work correctly. Set this to your domain URL (e.g., https://abc.onav.com.br)');
     // process.exit(1); // Optional: exit if critical env var is missing
 }
 if (!MOBILE_SHARE_LINK_BASE_URL) {
@@ -96,7 +96,7 @@ watcher
             console.log(`   Public Video URL: ${publicVideoUrl}`);
 
             // --- QR Code Generation & Upload ---
-            const qrCodeContent = `${process.env.APP_PUBLIC_URL}/mobile_template.html?video=${slug}`;
+            const qrCodeContent = `${process.env.APP_PUBLIC_URL}/mobile/${slug}.html`;
             const localQrCodeFilePath = path.join(QR_CODE_LOCAL_PATH_PREFIX, `qr_${slug}.png`);
             
             await QRCode.toFile(localQrCodeFilePath, qrCodeContent, {

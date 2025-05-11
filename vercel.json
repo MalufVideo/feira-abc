@@ -9,5 +9,16 @@
       "memory": 1024,
       "maxDuration": 10
     }
-  }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://abc.onav.com.br"
+        }
+      ]
+    }
+  ]
 }
