@@ -106,39 +106,49 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const params = new URLSearchParams(window.location.search);
-            const videoSlug = params.get('video'); // e.g., 2025-05-09 22-01-48_1746838921971
+            // Determine videoSlug: try query param, then path
+            const queryParams = new URLSearchParams(window.location.search);
+            let determinedVideoSlug = queryParams.get('video');
+
+            if (!determinedVideoSlug) {
+                const pathName = window.location.pathname;
+                const pathSegments = pathName.split('/'); // e.g., ["", "mobile", "some%20slug.html"]
+                if (pathSegments.length > 1) { // Ensure there's something after /mobile/
+                    let lastSegment = pathSegments[pathSegments.length - 1];
+                    if (lastSegment.endsWith('.html')) {
+                        lastSegment = lastSegment.slice(0, -'.html'.length); // "some%20slug"
+                    }
+                    if (lastSegment) { 
+                        try {
+                            determinedVideoSlug = decodeURIComponent(lastSegment);
+                        } catch (e) {
+                            console.error('Error decoding video slug from path:', lastSegment, e);
+                        }
+                    }
+                }
+            }
+
+            const videoSlug = determinedVideoSlug;
 
             if (!videoSlug) {
-                console.error('Video slug not found in URL parameters.');
-                // Optionally display an error message to the user
-                document.body.innerHTML = '<p style="color:white; text-align:center; padding-top: 50px;">Erro: Vídeo não encontrado. Verifique o link.</p>';
+                console.error('Video slug not specified in URL (query or path).');
+                document.body.innerHTML = '<p style="color:white; text-align:center; padding-top: 50px;">Erro: Vídeo não especificado no link.</p>';
                 return;
             }
 
-            // URL-encode the slug to handle spaces or other special characters
-            const encodedVideoSlug = encodeURIComponent(videoSlug);
+            const encodedVideoSlug = encodeURIComponent(videoSlug); // For Supabase URL
             const videoElement = document.getElementById('userVideo');
             const videoUrl = `https://cgcpaactxmygmdxmqyhz.supabase.co/storage/v1/object/public/videos/public/${encodedVideoSlug}.mp4`;
             videoElement.src = videoUrl;
             videoElement.load();
             videoElement.play().catch(e => console.warn('Autoplay prevented:', e));
             
-            // Log scan event when user views the video
             fetch(`https://abc.onav.com.br/api/log-scan?video=${videoSlug}`).catch(e => console.warn('Error logging scan:', e));
 
-            // Use the custom domain for the shareable link base URL
-            // This ensures consistent sharing links on abc.onav.com.br
-            // Create a smaller, URL-safe slug for sharing
-            let shortSlug = videoSlug;
-            if (videoSlug && videoSlug.includes('_')) {
-                shortSlug = videoSlug.split('_').pop(); // Take only the part after the last underscore
-            }
-            // Remove spaces and special characters (keep only numbers if possible)
-            shortSlug = shortSlug.replace(/[^0-9a-zA-Z-]/g, '');
-            const shareablePageUrl = `https://abc.onav.com.br/mobile/${shortSlug}.html`;
+            // Construct shareablePageUrl using the full, path-encoded videoSlug
+            const pathSafeIdentifier = encodeURIComponent(videoSlug);
+            const shareablePageUrl = `https://abc.onav.com.br/mobile/${pathSafeIdentifier}.html`;
 
-            // Update share links
             const shareButtons = {
                 whatsapp: document.getElementById('whatsappShare'),
                 download: document.getElementById('downloadVideo'),
