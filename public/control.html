@@ -80,13 +80,13 @@
                     const result = await response.json();
                     
                     if (result.success) {
-                        statusDiv.textContent = 'Recording in progress...';
+                        statusDiv.textContent = 'Recording in progress... (15 seconds)';
                         
-                        // Wait for recording to complete (10 seconds + processing time)
+                        // Wait for recording to complete (15 seconds + buffer for processing time)
                         setTimeout(() => {
                             statusDiv.textContent = 'Recording completed!';
                             startBtn.disabled = false;
-                        }, 12000); // 12 seconds to account for processing time
+                        }, 17000); // 15 seconds recording + 2 seconds buffer
                     } else {
                         statusDiv.textContent = `Error: ${result.message}`;
                         startBtn.disabled = false;

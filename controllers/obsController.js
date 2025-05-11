@@ -91,14 +91,18 @@ async function performSeleniumClick() {
 }
 
 // Function to send OSC message
-async function sendOSCMessage(address, ...args) {
-    try {
-        await oscClient.send(new OSCMessage(address, args));
-        return true;
-    } catch (error) {
-        console.error('Failed to send OSC message:', error);
-        return false;
-    }
+async function sendOSCMessage(address, value) {
+    return new Promise((resolve, reject) => {
+        console.log(`Sending OSC message: ${address} with value ${value}`);
+        oscClient.send(address, value, (err) => {
+            if (err) {
+                console.error('Error sending OSC message:', err);
+                return reject(err);
+            }
+            console.log(`OSC message ${address} with value ${value} sent successfully.`);
+            resolve();
+        });
+    });
 }
 
 // Main controller function to handle the recording process
@@ -122,25 +126,25 @@ async function controlRecording() {
             // This ensures that an error in the click doesn't stop the OSC/recording flow
         });
 
-        // Send OSC message 1: /d3/showcontrol/nextsection Float 1
+        // Send OSC message 1: /d3/showcontrol/cue Float 1
         try {
-            await sendOSCMessage('/d3/showcontrol/nextsection', 1.0);
+            await sendOSCMessage('/d3/showcontrol/cue', 1.0);
         } catch (oscError) {
             console.error('Failed to send initial OSC message:', oscError);
         }
         
         // Wait for 3 seconds, then send OSC message 2
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 4000));
         try {
-            await sendOSCMessage('/d3/showcontrol/nextsection', 2.0);
+            await sendOSCMessage('/d3/showcontrol/cue', 2.0);
         } catch (oscError) {
             console.error('Failed to send second OSC message:', oscError);
         }
 
         // Wait for another 3 seconds (total 6 seconds from start of OSC), then send OSC message 3
-        await new Promise(resolve => setTimeout(resolve, 3000)); // 3 more seconds
+        await new Promise(resolve => setTimeout(resolve, 4000)); // 3 more seconds
         try {
-            await sendOSCMessage('/d3/showcontrol/nextsection', 3.0);
+            await sendOSCMessage('/d3/showcontrol/cue', 3.0);
         } catch (oscError) {
             console.error('Failed to send third OSC message:', oscError);
         }
