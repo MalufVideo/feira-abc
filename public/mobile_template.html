@@ -145,9 +145,8 @@
             
             fetch(`https://abc.onav.com.br/api/log-scan?video=${videoSlug}`).catch(e => console.warn('Error logging scan:', e));
 
-            // Construct shareablePageUrl using the full, path-encoded videoSlug
-            const pathSafeIdentifier = encodeURIComponent(videoSlug);
-            const shareablePageUrl = `https://abc.onav.com.br/mobile/${pathSafeIdentifier}.html`;
+            // Construct shareablePageUrl using the canonical template and videoSlug as a query parameter
+            const shareablePageUrl = `https://abc.onav.com.br/mobile_template.html?video=${encodeURIComponent(videoSlug)}`;
 
             const shareButtons = {
                 whatsapp: document.getElementById('whatsappShare'),
