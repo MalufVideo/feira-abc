@@ -68,7 +68,17 @@
 
         <div class="share mt-5 flex flex-wrap justify-center gap-3">
             <a id="whatsappShare" class="btn-share-base whatsapp-btn" href="#" title="Compartilhar no WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            <a id="shareVideo" class="btn-share-base" style="background-color: #ffb300;" href="#" title="Compartilhar"><i class="fas fa-share-alt"></i></a>
             <a id="downloadVideo" class="btn-share-base download-btn" href="#" title="Baixar Vídeo"><i class="fas fa-download"></i></a>
+        </div>
+
+        <!-- Modal for sharing instructions -->
+        <div id="shareModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); align-items:center; justify-content:center;">
+            <div style="background:#222; color:#fff; padding:2em 1.5em; border-radius:18px; max-width:95vw; width:350px; text-align:center; position:relative;">
+                <button id="closeShareModal" style="position:absolute; top:10px; right:15px; background:transparent; color:#fff; border:none; font-size:1.5em; cursor:pointer;">&times;</button>
+                <h2 style="font-size:1.3em; margin-bottom:1em;">Como compartilhar o vídeo</h2>
+                <div id="shareInstructions"></div>
+            </div>
         </div>
 
         <div class="mt-8 w-full max-w-2xl text-center">
@@ -118,7 +128,14 @@
 
             // Use the custom domain for the shareable link base URL
             // This ensures consistent sharing links on abc.onav.com.br
-            const shareablePageUrl = `https://abc.onav.com.br/mobile/${videoSlug}.html`;
+            // Create a smaller, URL-safe slug for sharing
+            let shortSlug = videoSlug;
+            if (videoSlug && videoSlug.includes('_')) {
+                shortSlug = videoSlug.split('_').pop(); // Take only the part after the last underscore
+            }
+            // Remove spaces and special characters (keep only numbers if possible)
+            shortSlug = shortSlug.replace(/[^0-9a-zA-Z-]/g, '');
+            const shareablePageUrl = `https://abc.onav.com.br/mobile/${shortSlug}.html`;
 
             // Update share links
             const shareButtons = {
@@ -131,14 +148,64 @@
 
             shareButtons.whatsapp.onclick = () => {
                 fetch(logApiBase + 'whatsapp');
-                window.open(`whatsapp://send?text=Confira meu vídeo: ${encodeURIComponent(shareablePageUrl)}`, '_blank');
+                window.open(`whatsapp://send?text=Confira meu vídeo em Produção Virtual da On+Av+Rube na Semana ABC: ${encodeURIComponent(shareablePageUrl)}`,'_blank');
                 return false;
             };
+
+            // Web Share API button
+            const shareBtn = document.getElementById('shareVideo');
+            if (navigator.share) {
+                shareBtn.style.display = '';
+                shareBtn.onclick = () => {
+                    fetch(logApiBase + 'webshare');
+                    navigator.share({
+                        title: 'Meu vídeo',
+                        text: 'Confira meu vídeo em Produção Virtual da On+Av+Rube na Semana ABC',
+                        url: shareablePageUrl
+                    }).catch(()=>{});
+                    return false;
+                };
+            } else {
+                shareBtn.style.display = '';
+                shareBtn.onclick = () => {
+                    showShareModal();
+                    return false;
+                };
+            }
+
+            // Modal logic
+            function showShareModal() {
+                const modal = document.getElementById('shareModal');
+                const instructions = document.getElementById('shareInstructions');
+                let html = '';
+                if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                    html += '<div style="margin-bottom:1em;"><i class="fas fa-mobile-alt" style="font-size:2em;color:#25D366;"></i></div>';
+                    html += '<b>iPhone:</b><br>1. Clique em <b>Baixar Vídeo</b>.<br>2. Toque e segure o vídeo na nova aba e selecione <b>Salvar Vídeo</b>.<br>3. Compartilhe do app Fotos.';
+                } else if (/Android/i.test(navigator.userAgent)) {
+                    html += '<div style="margin-bottom:1em;"><i class="fab fa-android" style="font-size:2em;color:#3ddc84;"></i></div>';
+                    html += '<b>Android:</b><br>1. Clique em <b>Baixar Vídeo</b>.<br>2. O vídeo será salvo na sua galeria.<br>3. Compartilhe do app Fotos.';
+                } else {
+                    html += '<div style="margin-bottom:1em;"><i class="fas fa-desktop" style="font-size:2em;color:#00ff9d;"></i></div>';
+                    html += '<b>Computador:</b><br>1. Clique em <b>Baixar Vídeo</b>.<br>2. O vídeo será salvo na sua pasta de downloads.<br>3. Compartilhe pelo WhatsApp Web ou redes sociais.';
+                }
+                instructions.innerHTML = html;
+                modal.style.display = 'flex';
+            }
+            document.getElementById('closeShareModal').onclick = () => {
+                document.getElementById('shareModal').style.display = 'none';
+            };
+            document.getElementById('shareModal').onclick = (e) => {
+                if (e.target === document.getElementById('shareModal')) {
+                    document.getElementById('shareModal').style.display = 'none';
+                }
+            };
+
             shareButtons.download.onclick = () => {
                 fetch(logApiBase + 'download');
-                // For direct download, ensure Supabase serves with appropriate headers or use a proxy
-                // Simplest is to link to the video URL which might open in browser or download based on headers
-                window.location.href = videoUrl; // Or use a version that forces download
+                window.open(videoUrl, '_blank');
+                setTimeout(() => {
+                    showShareModal();
+                }, 500);
                 return false;
             };
         });
