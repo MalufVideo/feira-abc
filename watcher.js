@@ -96,7 +96,7 @@ watcher
             console.log(`   Public Video URL: ${publicVideoUrl}`);
 
             // --- QR Code Generation & Upload ---
-            const qrCodeContent = `${process.env.APP_PUBLIC_URL}/mobile/${slug}.html`;
+            const qrCodeContent = `${process.env.APP_PUBLIC_URL}/mobile_template.html?video=${slug}#`; // Updated line
             const localQrCodeFilePath = path.join(QR_CODE_LOCAL_PATH_PREFIX, `qr_${slug}.png`);
             
             await QRCode.toFile(localQrCodeFilePath, qrCodeContent, {
