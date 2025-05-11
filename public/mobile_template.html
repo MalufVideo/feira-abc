@@ -101,6 +101,7 @@
                 </div>
             </div>
         </div>
+        <p id="downloadStatus" style="display: none; color: white;"></p>
     </div>
 
     <script>
@@ -200,13 +201,99 @@
                 }
             };
 
-            shareButtons.download.onclick = () => {
-                fetch(logApiBase + 'download');
-                window.open(videoUrl, '_blank');
-                setTimeout(() => {
-                    showShareModal();
-                }, 500);
-                return false;
+            const downloadStatusEl = document.getElementById('downloadStatus');
+
+            shareButtons.download.onclick = async () => {
+                fetch(logApiBase + 'download').catch(e => console.warn('Error logging download:', e));
+                
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+                if (isIOS) {
+                    downloadStatusEl.textContent = 'Abrindo vídeo...';
+                    downloadStatusEl.style.display = 'block';
+                    
+                    // Open the video in a new tab. iOS will handle it, allowing tap-and-hold to save to Photos.
+                    window.open(videoUrl, '_blank');
+                    
+                    // Update status message to guide the user
+                    // This message will be on the original tab
+                    downloadStatusEl.textContent = 'Vídeo aberto! No iPhone, toque e segure no vídeo na nova aba e escolha "Salvar Vídeo".';
+                    
+                    // Hide the message after a few seconds, or provide a way to dismiss it
+                    setTimeout(() => {
+                        downloadStatusEl.style.display = 'none';
+                    }, 7000); // Keep it longer for user to read
+
+                } else {
+                    // For Android/Desktop, use the advanced download with progress
+                    downloadStatusEl.textContent = 'Preparando download...';
+                    downloadStatusEl.style.display = 'block';
+
+                    try {
+                        const response = await fetch(videoUrl);
+                        if (!response.ok) {
+                            throw new Error(`Falha ao buscar vídeo: ${response.status} ${response.statusText}`);
+                        }
+                        
+                        const contentLength = response.headers.get('content-length');
+                        let loaded = 0;
+                        
+                        const newResponse = new Response(new ReadableStream({
+                            async start(controller) {
+                                const reader = response.body.getReader();
+                                downloadStatusEl.textContent = 'Baixando vídeo... 0%';
+                                while (true) {
+                                    const { done, value } = await reader.read();
+                                    if (done) break;
+                                    loaded += value.byteLength;
+                                    if (contentLength) {
+                                        const percent = Math.round((loaded / contentLength) * 100);
+                                        downloadStatusEl.textContent = `Baixando vídeo... ${percent}%`;
+                                    } else {
+                                        downloadStatusEl.textContent = `Baixando vídeo... (${(loaded / (1024*1024)).toFixed(1)} MB)`;
+                                    }
+                                    controller.enqueue(value);
+                                }
+                                controller.close();
+                            }
+                        }));
+
+                        const videoBlob = await newResponse.blob();
+                        const objectUrl = URL.createObjectURL(videoBlob);
+
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = objectUrl;
+                        
+                        let fileName = videoSlug.replace(/[^a-zA-Z0-9_.-]+/g, '_');
+                        if (!fileName.toLowerCase().endsWith('.mp4')) {
+                             fileName += '.mp4';
+                        }
+                        a.download = fileName; 
+                        
+                        document.body.appendChild(a);
+                        a.click();
+                        
+                        downloadStatusEl.textContent = 'Download iniciado!';
+                        setTimeout(() => {
+                            downloadStatusEl.style.display = 'none';
+                        }, 3000);
+
+                        setTimeout(() => {
+                            URL.revokeObjectURL(objectUrl);
+                            document.body.removeChild(a);
+                        }, 100);
+
+                    } catch (error) {
+                        console.error('Erro ao baixar o vídeo:', error);
+                        downloadStatusEl.textContent = 'Erro no download.';
+                        setTimeout(() => {
+                             downloadStatusEl.style.display = 'none';
+                        }, 3000);
+                        alert('Houve um erro ao tentar baixar o vídeo. Por favor, tente novamente ou verifique sua conexão.');
+                    }
+                }
+                return false; 
             };
         });
     </script>
