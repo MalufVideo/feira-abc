@@ -107,6 +107,38 @@
             const osc1TimeInput = document.getElementById('osc1TimeInput');
             const osc2TimeInput = document.getElementById('osc2TimeInput');
             const osc3TimeInput = document.getElementById('osc3TimeInput');
+
+            // Function to save settings to localStorage
+            function saveSettings() {
+                localStorage.setItem('totalRecTime', totalRecTimeInput.value);
+                localStorage.setItem('osc1Time', osc1TimeInput.value);
+                localStorage.setItem('osc2Time', osc2TimeInput.value);
+                localStorage.setItem('osc3Time', osc3TimeInput.value);
+            }
+
+            // Function to load settings from localStorage
+            function loadSettings() {
+                const savedTotalRecTime = localStorage.getItem('totalRecTime');
+                const savedOsc1Time = localStorage.getItem('osc1Time');
+                const savedOsc2Time = localStorage.getItem('osc2Time');
+                const savedOsc3Time = localStorage.getItem('osc3Time');
+
+                if (savedTotalRecTime !== null) {
+                    totalRecTimeInput.value = savedTotalRecTime;
+                }
+                if (savedOsc1Time !== null) {
+                    osc1TimeInput.value = savedOsc1Time;
+                }
+                if (savedOsc2Time !== null) {
+                    osc2TimeInput.value = savedOsc2Time;
+                }
+                if (savedOsc3Time !== null) {
+                    osc3TimeInput.value = savedOsc3Time;
+                }
+            }
+
+            // Load settings when the page loads
+            loadSettings();
             
             startBtn.addEventListener('click', async () => {
                 try {
@@ -131,6 +163,9 @@
                         startBtn.disabled = false;
                         return;
                     }
+
+                    // Save settings before making the API call
+                    saveSettings();
                     
                     // Call our API endpoint to start the recording and click process
                     const response = await fetch('/api/control/start-recording', {
