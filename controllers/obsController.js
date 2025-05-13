@@ -106,7 +106,22 @@ async function sendOSCMessage(address, value) {
 }
 
 // Main controller function to handle the recording process
-async function controlRecording() {
+async function controlRecording(config = {}) {
+    const {
+        totalRecTime: totalRecTimeSec = 12, // Default total recording time in seconds
+        osc1Time: osc1TimeSec = 0,         // Default OSC 1 time in seconds
+        osc2Time: osc2TimeSec = 4,         // Default OSC 2 time in seconds
+        osc3Time: osc3TimeSec = 8          // Default OSC 3 time in seconds
+    } = config;
+
+    // Convert all times to milliseconds
+    const totalRecTimeMs = totalRecTimeSec * 1000;
+    const osc1TimeMs = osc1TimeSec * 1000;
+    const osc2TimeMs = osc2TimeSec * 1000;
+    const osc3TimeMs = osc3TimeSec * 1000;
+
+    console.log(`ControlRecording called with: totalRecTime=${totalRecTimeSec}s, osc1Time=${osc1TimeSec}s, osc2Time=${osc2TimeSec}s, osc3Time=${osc3TimeSec}s`);
+
     try {
         // Connect to OBS
         const connected = await connectToOBS();
@@ -126,42 +141,69 @@ async function controlRecording() {
             // This ensures that an error in the click doesn't stop the OSC/recording flow
         });
 
-        // Send OSC message 1: /d3/showcontrol/cue Float 1
+        let accumulatedDelayMs = 0;
+
+        // Send OSC message 1
+        const delayForOsc1 = Math.max(0, osc1TimeMs - accumulatedDelayMs);
+        if (delayForOsc1 > 0) {
+            await new Promise(resolve => setTimeout(resolve, delayForOsc1));
+        }
+        accumulatedDelayMs = osc1TimeMs; // Absolute time for OSC 1
         try {
             await sendOSCMessage('/d3/showcontrol/cue', 1.0);
         } catch (oscError) {
             console.error('Failed to send initial OSC message:', oscError);
         }
         
-        // Wait for 3 seconds, then send OSC message 2
-        await new Promise(resolve => setTimeout(resolve, 4000));
+        // Send OSC message 2
+        const delayForOsc2 = Math.max(0, osc2TimeMs - accumulatedDelayMs);
+        if (delayForOsc2 > 0) {
+            await new Promise(resolve => setTimeout(resolve, delayForOsc2));
+        }
+        accumulatedDelayMs = osc2TimeMs; // Absolute time for OSC 2
         try {
             await sendOSCMessage('/d3/showcontrol/cue', 2.0);
         } catch (oscError) {
             console.error('Failed to send second OSC message:', oscError);
         }
 
-        // Wait for another 3 seconds (total 6 seconds from start of OSC), then send OSC message 3
-        await new Promise(resolve => setTimeout(resolve, 4000)); // 3 more seconds
+        // Send OSC message 3
+        const delayForOsc3 = Math.max(0, osc3TimeMs - accumulatedDelayMs);
+        if (delayForOsc3 > 0) {
+            await new Promise(resolve => setTimeout(resolve, delayForOsc3));
+        }
+        accumulatedDelayMs = osc3TimeMs; // Absolute time for OSC 3
         try {
             await sendOSCMessage('/d3/showcontrol/cue', 3.0);
         } catch (oscError) {
             console.error('Failed to send third OSC message:', oscError);
         }
 
-        // Wait for the remainder of the 10-second recording period
-        // Initial OSC was at 0s, second at 3s, third at 6s.
-        // If total recording time is 10s, wait for 10 - 6 = 4 more seconds.
-        await new Promise(resolve => setTimeout(resolve, 4000)); 
+        // Wait for the remainder of the recording period
+        const finalWaitMs = Math.max(0, totalRecTimeMs - accumulatedDelayMs);
+        if (finalWaitMs > 0) {
+            await new Promise(resolve => setTimeout(resolve, finalWaitMs));
+        }
         
         // Stop recording
         const recordingStopped = await stopRecording();
         if (!recordingStopped) {
-            // Disconnect from OBS if stopping recording fails but OBS is connected
-            if (obs && obs.socket && obs.socket.readyState === 1) {
-                await obs.disconnect();
-            }
+            // Even if stopping fails, we might still want to disconnect
+            await obs.disconnect();
             return { success: false, message: 'Failed to stop recording' };
+        }
+
+        // Add a 1-second delay after stopping recording
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Send OSC message to go back to Cue 1
+        try {
+            await sendOSCMessage('/d3/showcontrol/cue', 1.0);
+            console.log('Sent OSC message to return to Cue 1.');
+        } catch (oscError) {
+            console.error('Failed to send OSC message to return to Cue 1:', oscError);
+            // Optionally, you might want to reflect this error in the response,
+            // but for now, we'll just log it and proceed with success if recording was okay.
         }
         
         // Disconnect from OBS

@@ -53,11 +53,48 @@
             border-radius: 5px;
             background-color: #f8f9fa;
         }
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .form-group input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>OBS Recording Control</h1>
+
+        <div class="form-group">
+            <label for="totalRecTime">Total Recording Time (seconds):</label>
+            <input type="number" id="totalRecTimeInput" value="12">
+        </div>
+
+        <div class="form-group">
+            <label for="osc1Time">OSC Cue 1 Time (seconds from start):</label>
+            <input type="number" id="osc1TimeInput" value="0">
+        </div>
+
+        <div class="form-group">
+            <label for="osc2Time">OSC Cue 2 Time (seconds from start):</label>
+            <input type="number" id="osc2TimeInput" value="4">
+        </div>
+
+        <div class="form-group">
+            <label for="osc3Time">OSC Cue 3 Time (seconds from start):</label>
+            <input type="number" id="osc3TimeInput" value="8">
+        </div>
+
         <button id="startBtn" class="start-btn">START</button>
         <div id="status" class="status">Ready to record</div>
     </div>
@@ -66,27 +103,59 @@
         document.addEventListener('DOMContentLoaded', () => {
             const startBtn = document.getElementById('startBtn');
             const statusDiv = document.getElementById('status');
+            const totalRecTimeInput = document.getElementById('totalRecTimeInput');
+            const osc1TimeInput = document.getElementById('osc1TimeInput');
+            const osc2TimeInput = document.getElementById('osc2TimeInput');
+            const osc3TimeInput = document.getElementById('osc3TimeInput');
             
             startBtn.addEventListener('click', async () => {
                 try {
                     startBtn.disabled = true;
                     statusDiv.textContent = 'Starting recording and automation...';
+
+                    const totalRecTime = parseFloat(totalRecTimeInput.value);
+                    const osc1Time = parseFloat(osc1TimeInput.value);
+                    const osc2Time = parseFloat(osc2TimeInput.value);
+                    const osc3Time = parseFloat(osc3TimeInput.value);
+
+                    if (isNaN(totalRecTime) || totalRecTime <= 0 ||
+                        isNaN(osc1Time) || osc1Time < 0 ||
+                        isNaN(osc2Time) || osc2Time < 0 ||
+                        isNaN(osc3Time) || osc3Time < 0) {
+                        statusDiv.textContent = 'Error: Please enter valid positive numbers for times.';
+                        startBtn.disabled = false;
+                        return;
+                    }
+                    if (!(osc1Time <= osc2Time && osc2Time <= osc3Time && osc3Time <= totalRecTime)) {
+                        statusDiv.textContent = 'Error: OSC times must be sequential and less than or equal to total recording time.';
+                        startBtn.disabled = false;
+                        return;
+                    }
                     
                     // Call our API endpoint to start the recording and click process
                     const response = await fetch('/api/control/start-recording', {
-                        method: 'POST'
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            totalRecTime,
+                            osc1Time,
+                            osc2Time,
+                            osc3Time
+                        })
                     });
                     
                     const result = await response.json();
                     
                     if (result.success) {
-                        statusDiv.textContent = 'Recording in progress... (15 seconds)';
+                        statusDiv.textContent = `Recording in progress... (${totalRecTime} seconds)`;
                         
-                        // Wait for recording to complete (15 seconds + buffer for processing time)
+                        // Wait for recording to complete (totalRecTime + buffer for processing time)
                         setTimeout(() => {
                             statusDiv.textContent = 'Recording completed!';
                             startBtn.disabled = false;
-                        }, 17000); // 15 seconds recording + 2 seconds buffer
+                        }, (totalRecTime * 1000) + 2000); // totalRecTime in ms + 2 seconds buffer
                     } else {
                         statusDiv.textContent = `Error: ${result.message}`;
                         startBtn.disabled = false;

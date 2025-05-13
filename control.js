@@ -9,7 +9,9 @@ app.use(express.json());
 // API endpoint to trigger OBS recording and Selenium click
 app.post('/api/control/start-recording', async (req, res) => {
     try {
-        const result = await controlRecording();
+        // Pass the request body (which contains the timing configuration)
+        // to the controlRecording function.
+        const result = await controlRecording(req.body);
         res.json(result);
     } catch (error) {
         res.status(500).json({ success: false, message: `Server error: ${error.message || 'Unknown error'}` });
